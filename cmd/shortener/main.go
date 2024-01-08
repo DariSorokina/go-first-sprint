@@ -2,7 +2,6 @@ package main
 
 import (
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
@@ -10,17 +9,18 @@ import (
 	"github.com/gorilla/mux"
 )
 
-var URLMap = app.URL{}
+var Data = map[string]string{"https://practicum.yandex.ru/": "d41d8cd98f"}
+var URLMap = app.URL{Data: Data}
 
-func apiShortener(res http.ResponseWriter, req *http.Request) {
+func ShortenerHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodPost {
 		http.Error(res, "Only POST requests are allowed!", http.StatusBadRequest)
 		return
 	}
+
 	requestBody, err := io.ReadAll(req.Body)
 	if err != nil {
-		log.Println(err)
-		res.Write([]byte("Плохое тело запроса"))
+		http.Error(res, "Bad request body", http.StatusBadRequest)
 		return
 	}
 
@@ -32,7 +32,7 @@ func apiShortener(res http.ResponseWriter, req *http.Request) {
 	res.Write([]byte(response))
 }
 
-func apiOriginal(res http.ResponseWriter, req *http.Request) {
+func OriginalHandler(res http.ResponseWriter, req *http.Request) {
 	if req.Method != http.MethodGet {
 		http.Error(res, "Only GET requests are allowed!", http.StatusBadRequest)
 		return
@@ -46,16 +46,10 @@ func apiOriginal(res http.ResponseWriter, req *http.Request) {
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
-func NotFoundHandler(res http.ResponseWriter, req *http.Request) {
-	http.Error(res, "Bad request", http.StatusBadRequest)
-}
-
 func main() {
 	router := mux.NewRouter()
-	router.HandleFunc("/", apiShortener).Methods(http.MethodPost)
-	router.HandleFunc("/{id}", apiOriginal).Methods(http.MethodGet)
-
-	router.NotFoundHandler = http.HandlerFunc(NotFoundHandler)
+	router.HandleFunc("/", ShortenerHandler).Methods(http.MethodPost)
+	router.HandleFunc("/{id}", OriginalHandler).Methods(http.MethodGet)
 
 	err := http.ListenAndServe(":8080", router)
 	if err != nil {

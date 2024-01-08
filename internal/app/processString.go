@@ -6,7 +6,7 @@ import (
 )
 
 type URL struct {
-	data map[string]string
+	Data map[string]string
 }
 
 func encodeString(data string) string {
@@ -17,22 +17,22 @@ func encodeString(data string) string {
 }
 
 func (url *URL) ToSortenURL(longURL string) (shortURL string) {
-	if url.data == nil {
-		url.data = make(map[string]string)
+	if url.Data == nil {
+		url.Data = make(map[string]string)
 	}
 
-	if value, ok := url.data[longURL]; ok {
+	if value, ok := url.Data[longURL]; ok {
 		shortURL = value
 		return
 	}
 
 	shortURL = encodeString(longURL)
-	url.data[longURL] = shortURL
+	url.Data[longURL] = shortURL
 	return
 }
 
 func (url *URL) ToOriginalURL(shortURL string) (longURL string) {
-	for lURL, sURL := range url.data {
+	for lURL, sURL := range url.Data {
 		if sURL == shortURL {
 			longURL = lURL
 			return
@@ -42,11 +42,16 @@ func (url *URL) ToOriginalURL(shortURL string) (longURL string) {
 }
 
 // func main() {
-// 	myURL := URL{}
-// 	res := myURL.ToSortenURL("https://practicum.yandex.ru")
+// 	var data = map[string]string{"https://practicum.yandex.ru/": "d41d8cd98f"}
+// 	var myURL = URL{Data: data}
+// 	fmt.Println(myURL)
+// 	// myURL := URL{}
+// 	res := myURL.ToSortenURL("https://practicum.yandex.ru/")
 // 	fmt.Println(res)
+// 	fmt.Println(myURL)
 
-// 	res1 := myURL.ToOriginalURL("6bdb5b0e26")
+// 	res1 := myURL.ToOriginalURL("d41d8cd98f")
 // 	fmt.Println(res1)
+// 	fmt.Println(myURL)
 
 // }
