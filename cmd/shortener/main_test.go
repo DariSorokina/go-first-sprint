@@ -23,10 +23,10 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, request
 
 	result, err := client.Do(req)
 	require.NoError(t, err)
-	defer result.Body.Close()
 
 	resultBody, err := io.ReadAll(result.Body)
 	require.NoError(t, err)
+	result.Body.Close()
 
 	return result, string(resultBody)
 }
