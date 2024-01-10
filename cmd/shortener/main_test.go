@@ -23,10 +23,10 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, request
 
 	result, err := client.Do(req)
 	require.NoError(t, err)
+	defer result.Body.Close()
 
 	resultBody, err := io.ReadAll(result.Body)
 	require.NoError(t, err)
-	result.Body.Close()
 
 	return result, string(resultBody)
 }
@@ -101,6 +101,7 @@ func TestRouter(t *testing.T) {
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
 			result, resultBody := testRequest(t, testServer, test.method, test.requestPath, test.requestBody)
+			defer result.Body.Close()
 			assert.Equal(t, test.expectedData.expectedStatusCode, result.StatusCode)
 			assert.Equal(t, test.expectedData.expectedLocation, result.Header.Get("Location"))
 			assert.Equal(t, test.expectedData.expectedContentType, result.Header.Get("Content-Type"))
