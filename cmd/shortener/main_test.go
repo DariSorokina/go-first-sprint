@@ -1,70 +1,40 @@
 package main
 
 import (
-	"fmt"
+	"bytes"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
-	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func Test_ShortenerHandler(t *testing.T) {
-	type expectedData struct {
-		expectedContentType string
-		expectedStatusCode  int
-		expectedBody        string
-	}
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, requestBody io.Reader) (*http.Response, string) {
+	req, err := http.NewRequest(method, ts.URL+path, requestBody)
+	require.NoError(t, err)
 
-	testCases := []struct {
-		name         string
-		method       string
-		request      string
-		expectedData expectedData
-	}{
-		{
-			name:    "StatusCreated",
-			method:  http.MethodPost,
-			request: "https://practicum.yandex.ru/",
-			expectedData: expectedData{
-				expectedContentType: "text/plain",
-				expectedStatusCode:  http.StatusCreated,
-				expectedBody:        "http://localhost:8080/d41d8cd98f",
-			},
-		},
-		{
-			name:    "StatusBadRequest",
-			method:  http.MethodPut,
-			request: "https://practicum.yandex.ru/",
-			expectedData: expectedData{
-				expectedContentType: "text/plain; charset=utf-8",
-				expectedStatusCode:  http.StatusBadRequest,
-				expectedBody:        "Only POST requests are allowed!\n",
-			},
+	client := &http.Client{
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
 		},
 	}
-	for _, test := range testCases {
-		t.Run(test.name, func(t *testing.T) {
-			request := httptest.NewRequest(test.method, test.request, nil)
-			w := httptest.NewRecorder()
-			ShortenerHandler(w, request)
 
-			result := w.Result()
-			assert.Equal(t, test.expectedData.expectedStatusCode, result.StatusCode)
-			assert.Equal(t, test.expectedData.expectedContentType, result.Header.Get("Content-Type"))
+	result, err := client.Do(req)
+	require.NoError(t, err)
+	defer result.Body.Close()
 
-			defer result.Body.Close()
-			resBody, err := io.ReadAll(result.Body)
-			require.NoError(t, err)
-			assert.Equal(t, test.expectedData.expectedBody, string(resBody))
-		})
-	}
+	resultBody, err := io.ReadAll(result.Body)
+	require.NoError(t, err)
+
+	return result, string(resultBody)
 }
 
-func Test_OriginalHandler(t *testing.T) {
+func TestRouter(t *testing.T) {
+	testServer := httptest.NewServer(LinkRouter())
+	defer testServer.Close()
+
 	type expectedData struct {
 		expectedContentType string
 		expectedStatusCode  int
@@ -75,13 +45,39 @@ func Test_OriginalHandler(t *testing.T) {
 	testCases := []struct {
 		name         string
 		method       string
-		request      string
+		requestBody  io.Reader
+		requestPath  string
 		expectedData expectedData
 	}{
 		{
-			name:    "StatusTemporaryRedirect",
-			method:  http.MethodGet,
-			request: "/d41d8cd98f",
+			name:        "handler: ShortenerHandler, test: StatusCreated",
+			method:      http.MethodPost,
+			requestBody: bytes.NewBuffer([]byte("https://practicum.yandex.ru/")),
+			requestPath: "",
+			expectedData: expectedData{
+				expectedContentType: "text/plain",
+				expectedStatusCode:  http.StatusCreated,
+				expectedBody:        "http://localhost:8080/d41d8cd98f",
+				expectedLocation:    "",
+			},
+		},
+		{
+			name:        "handler: ShortenerHandler, test: StatusBadRequest",
+			method:      http.MethodPut,
+			requestBody: bytes.NewBuffer([]byte("https://practicum.yandex.ru/")),
+			requestPath: "",
+			expectedData: expectedData{
+				expectedContentType: "text/plain; charset=utf-8",
+				expectedStatusCode:  http.StatusBadRequest,
+				expectedBody:        "Only POST requests are allowed!\n",
+				expectedLocation:    "",
+			},
+		},
+		{
+			name:        "handler: OriginalHandler, test: StatusTemporaryRedirect",
+			method:      http.MethodGet,
+			requestBody: nil,
+			requestPath: "/d41d8cd98f",
 			expectedData: expectedData{
 				expectedContentType: "",
 				expectedStatusCode:  http.StatusTemporaryRedirect,
@@ -90,9 +86,10 @@ func Test_OriginalHandler(t *testing.T) {
 			},
 		},
 		{
-			name:    "StatusBadRequest",
-			method:  http.MethodPut,
-			request: "/d41d8cd98f",
+			name:        "handler: OriginalHandler, test: StatusBadRequest",
+			method:      http.MethodPut,
+			requestBody: nil,
+			requestPath: "/d41d8cd98f",
 			expectedData: expectedData{
 				expectedContentType: "text/plain; charset=utf-8",
 				expectedStatusCode:  http.StatusBadRequest,
@@ -103,22 +100,11 @@ func Test_OriginalHandler(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			router := mux.NewRouter()
-			router.HandleFunc("/{id}", OriginalHandler).Methods(test.method)
-			request := httptest.NewRequest(test.method, test.request, nil)
-			w := httptest.NewRecorder()
-			router.ServeHTTP(w, request)
-
-			result := w.Result()
-			fmt.Println(result)
+			result, resultBody := testRequest(t, testServer, test.method, test.requestPath, test.requestBody)
 			assert.Equal(t, test.expectedData.expectedStatusCode, result.StatusCode)
 			assert.Equal(t, test.expectedData.expectedLocation, result.Header.Get("Location"))
 			assert.Equal(t, test.expectedData.expectedContentType, result.Header.Get("Content-Type"))
-
-			defer result.Body.Close()
-			resBody, err := io.ReadAll(result.Body)
-			require.NoError(t, err)
-			assert.Equal(t, test.expectedData.expectedBody, string(resBody))
+			assert.Equal(t, test.expectedData.expectedBody, string(resultBody))
 		})
 	}
 }

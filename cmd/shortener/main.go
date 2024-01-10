@@ -2,11 +2,11 @@ package main
 
 import (
 	"io"
+	"log"
 	"net/http"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
-
-	"github.com/gorilla/mux"
+	"github.com/go-chi/chi/v5"
 )
 
 var Data = map[string]string{"https://practicum.yandex.ru/": "d41d8cd98f"}
@@ -38,22 +38,19 @@ func OriginalHandler(res http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	vars := mux.Vars(req)
-	idValue := vars["id"]
-
-	correspondingURL := URLMap.ToOriginalURL(string(idValue))
+	idValue := chi.URLParam(req, "id")
+	correspondingURL := URLMap.ToOriginalURL(idValue)
 	res.Header().Set("Location", correspondingURL)
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
 
+func LinkRouter() chi.Router {
+	router := chi.NewRouter()
+	router.HandleFunc("/", ShortenerHandler)
+	router.HandleFunc("/{id}", OriginalHandler)
+	return router
+}
+
 func main() {
-	router := mux.NewRouter()
-	router.HandleFunc("/", ShortenerHandler).Methods(http.MethodPost)
-	router.HandleFunc("/{id}", OriginalHandler).Methods(http.MethodGet)
-
-	err := http.ListenAndServe(":8080", router)
-	if err != nil {
-		panic(err)
-	}
-
+	log.Fatal(http.ListenAndServe(":8080", LinkRouter()))
 }
