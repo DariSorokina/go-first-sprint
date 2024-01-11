@@ -1,11 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"io"
-	"log"
 	"net/http"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
+	"github.com/DariSorokina/go-first-sprint.git/internal/config"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -26,7 +27,7 @@ func ShortenerHandler(res http.ResponseWriter, req *http.Request) {
 
 	shortenedURL := URLMap.ToSortenURL(string(requestBody))
 
-	response := "http://localhost:8080/" + shortenedURL
+	response := config.FlagBaseURL + shortenedURL
 	res.Header().Set("content-type", "text/plain")
 	res.WriteHeader(http.StatusCreated)
 	res.Write([]byte(response))
@@ -51,6 +52,15 @@ func LinkRouter() chi.Router {
 	return router
 }
 
+func run() error {
+	fmt.Println("Running server on", config.FlagRunAddr)
+	return http.ListenAndServe(config.FlagRunAddr, LinkRouter())
+}
+
 func main() {
-	log.Fatal(http.ListenAndServe(":8080", LinkRouter()))
+	config.ParseFlags()
+
+	if err := run(); err != nil {
+		panic(err)
+	}
 }
