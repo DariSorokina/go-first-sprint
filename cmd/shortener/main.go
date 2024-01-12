@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
@@ -14,6 +15,7 @@ var Data = map[string]string{"https://practicum.yandex.ru/": "d41d8cd98f"}
 var URLMap = app.URL{Data: Data}
 
 func ShortenerHandler(res http.ResponseWriter, req *http.Request) {
+	var response string
 	if req.Method != http.MethodPost {
 		http.Error(res, "Only POST requests are allowed!", http.StatusBadRequest)
 		return
@@ -27,7 +29,11 @@ func ShortenerHandler(res http.ResponseWriter, req *http.Request) {
 
 	shortenedURL := URLMap.ToSortenURL(string(requestBody))
 
-	response := config.FlagBaseURL + shortenedURL
+	if strings.HasSuffix(config.FlagBaseURL, "/") {
+		response = config.FlagBaseURL + shortenedURL
+	} else {
+		response = config.FlagBaseURL + "/" + shortenedURL
+	}
 	res.Header().Set("content-type", "text/plain")
 	res.WriteHeader(http.StatusCreated)
 	res.Write([]byte(response))
