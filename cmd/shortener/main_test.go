@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/DariSorokina/go-first-sprint.git/internal/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -32,6 +33,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, request
 }
 
 func TestRouter(t *testing.T) {
+	config.ParseFlags()
 	testServer := httptest.NewServer(LinkRouter())
 	defer testServer.Close()
 
