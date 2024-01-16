@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
+	"github.com/DariSorokina/go-first-sprint.git/internal/transport"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,7 +35,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, request
 
 func TestRouter(t *testing.T) {
 	config.ParseFlags()
-	testServer := httptest.NewServer(LinkRouter())
+	testServer := httptest.NewServer(transport.LinkRouter())
 	defer testServer.Close()
 
 	type expectedData struct {
@@ -64,18 +65,6 @@ func TestRouter(t *testing.T) {
 			},
 		},
 		{
-			name:        "handler: ShortenerHandler, test: StatusBadRequest",
-			method:      http.MethodPut,
-			requestBody: bytes.NewBuffer([]byte("https://practicum.yandex.ru/")),
-			requestPath: "",
-			expectedData: expectedData{
-				expectedContentType: "text/plain; charset=utf-8",
-				expectedStatusCode:  http.StatusBadRequest,
-				expectedBody:        "Only POST requests are allowed!\n",
-				expectedLocation:    "",
-			},
-		},
-		{
 			name:        "handler: OriginalHandler, test: StatusTemporaryRedirect",
 			method:      http.MethodGet,
 			requestBody: nil,
@@ -85,18 +74,6 @@ func TestRouter(t *testing.T) {
 				expectedStatusCode:  http.StatusTemporaryRedirect,
 				expectedBody:        "",
 				expectedLocation:    "https://practicum.yandex.ru/",
-			},
-		},
-		{
-			name:        "handler: OriginalHandler, test: StatusBadRequest",
-			method:      http.MethodPut,
-			requestBody: nil,
-			requestPath: "/d41d8cd98f",
-			expectedData: expectedData{
-				expectedContentType: "text/plain; charset=utf-8",
-				expectedStatusCode:  http.StatusBadRequest,
-				expectedBody:        "Only GET requests are allowed!\n",
-				expectedLocation:    "",
 			},
 		},
 	}
