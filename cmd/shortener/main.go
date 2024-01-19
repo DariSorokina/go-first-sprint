@@ -2,12 +2,15 @@ package main
 
 import (
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
-	"github.com/DariSorokina/go-first-sprint.git/internal/transport"
+	"github.com/DariSorokina/go-first-sprint.git/internal/server"
+	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
 )
 
 func main() {
-	config.ParseFlags()
-	if err := transport.RunLinkRouter(); err != nil {
+	flagConfig := config.ParseFlags()
+	urlMap := storage.NewURL()
+	handlers := server.NewHandlers(urlMap, flagConfig)
+	if err := server.StartLinkRouter(handlers); err != nil {
 		panic(err)
 	}
 }
