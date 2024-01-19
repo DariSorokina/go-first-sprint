@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
 	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
 	"github.com/stretchr/testify/assert"
@@ -35,9 +36,11 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, request
 
 func TestRouter(t *testing.T) {
 	flagConfig := config.ParseFlags()
-	urlMap := storage.NewURL()
-	handlers := NewHandlers(urlMap, flagConfig)
-	testServer := httptest.NewServer(LinkRouter(handlers))
+	storage := storage.NewStorage()
+	app := app.NewApp(storage)
+	handlers := newHandlers(app, flagConfig)
+	serv := NewServer(app, flagConfig)
+	testServer := httptest.NewServer(serv.newRouter(handlers))
 	defer testServer.Close()
 
 	type expectedData struct {

@@ -8,20 +8,19 @@ import (
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
-	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
 
-type Handlers struct {
-	urlMap     *storage.URL
+type handlers struct {
+	app        *app.App
 	flagConfig *config.FlagConfig
 }
 
-func NewHandlers(urlMap *storage.URL, flagConfig *config.FlagConfig) *Handlers {
-	return &Handlers{urlMap: urlMap, flagConfig: flagConfig}
+func newHandlers(app *app.App, flagConfig *config.FlagConfig) *handlers {
+	return &handlers{app: app, flagConfig: flagConfig}
 }
 
-func (handlers *Handlers) ShortenerHandler(res http.ResponseWriter, req *http.Request) {
+func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Request) {
 	var response string
 	requestBody, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -29,7 +28,7 @@ func (handlers *Handlers) ShortenerHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	shortenedURL := app.ToSortenURL(handlers.urlMap, string(requestBody))
+	shortenedURL := handlers.app.ToShortenURL(string(requestBody))
 
 	response, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
 	if err != nil {
@@ -43,9 +42,9 @@ func (handlers *Handlers) ShortenerHandler(res http.ResponseWriter, req *http.Re
 	res.Write([]byte(response))
 }
 
-func (handlers *Handlers) OriginalHandler(res http.ResponseWriter, req *http.Request) {
+func (handlers *handlers) originalHandler(res http.ResponseWriter, req *http.Request) {
 	idValue := chi.URLParam(req, "id")
-	correspondingURL := app.ToOriginalURL(handlers.urlMap, idValue)
+	correspondingURL := handlers.app.ToOriginalURL(idValue)
 	res.Header().Set("Location", correspondingURL)
 	res.WriteHeader(http.StatusTemporaryRedirect)
 }
