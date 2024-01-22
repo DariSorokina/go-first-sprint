@@ -16,13 +16,16 @@ func NewStorage() *Storage {
 }
 
 func (storage *Storage) SetValue(shortURL, longURL string) {
+	storage.mutex.Lock()
+	defer storage.mutex.Unlock()
+
 	storage.originalToShort[longURL] = shortURL
 	storage.shortToOriginal[shortURL] = longURL
 }
 
 func (storage *Storage) GetShort(longURL string) (shortURL string) {
-	storage.mutex.Lock()
-	defer storage.mutex.Unlock()
+	storage.mutex.RLock()
+	defer storage.mutex.RUnlock()
 
 	if value, ok := storage.originalToShort[longURL]; ok {
 		shortURL = value
@@ -32,8 +35,8 @@ func (storage *Storage) GetShort(longURL string) (shortURL string) {
 }
 
 func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
-	storage.mutex.Lock()
-	defer storage.mutex.Unlock()
+	storage.mutex.RLock()
+	defer storage.mutex.RUnlock()
 
 	if value, ok := storage.shortToOriginal[shortURL]; ok {
 		longURL = value
