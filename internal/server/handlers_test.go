@@ -3,12 +3,14 @@ package server
 import (
 	"bytes"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
+	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -36,11 +38,16 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, request
 
 func TestRouter(t *testing.T) {
 	flagConfig := config.ParseFlags()
+	var l *logger.Logger
+	var err error
+	if l, err = logger.CreateLogger(flagConfig.FlagLogLevel); err != nil {
+		log.Fatal("Failed to create logger:", err)
+	}
+
 	storage := storage.NewStorage()
 	app := app.NewApp(storage)
-	handlers := newHandlers(app, flagConfig)
-	serv := NewServer(app, flagConfig)
-	testServer := httptest.NewServer(serv.newRouter(handlers))
+	serv := NewServer(app, flagConfig, l)
+	testServer := httptest.NewServer(serv.newRouter())
 	defer testServer.Close()
 
 	type expectedData struct {
