@@ -27,6 +27,7 @@ func (server *Server) newRouter() chi.Router {
 	router.Use(server.log.WithLogging())
 	router.Post("/", server.handlers.shortenerHandler)
 	router.Get("/{id}", server.handlers.originalHandler)
+	router.Post("/api/shorten", server.handlers.shortenerHandlerJSON)
 	return router
 }
 

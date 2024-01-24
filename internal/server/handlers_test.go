@@ -88,6 +88,18 @@ func TestRouter(t *testing.T) {
 				expectedLocation:    "https://practicum.yandex.ru/",
 			},
 		},
+		{
+			name:        "handler: shortenerHandlerJSON, test: StatusCreated",
+			method:      http.MethodPost,
+			requestBody: bytes.NewBuffer([]byte("{\"url\":\"https://practicum.yandex.ru/\"} ")),
+			requestPath: "/api/shorten",
+			expectedData: expectedData{
+				expectedContentType: "application/json",
+				expectedStatusCode:  http.StatusCreated,
+				expectedBody:        "{\"result\":\"http://localhost:8080/d41d8cd98f\"}",
+				expectedLocation:    "",
+			},
+		},
 	}
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
