@@ -21,6 +21,9 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, request
 	require.NoError(t, err)
 
 	client := &http.Client{
+		Transport: &http.Transport{
+			DisableCompression: true,
+		},
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
