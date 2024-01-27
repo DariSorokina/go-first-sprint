@@ -38,8 +38,8 @@ func CreateLogger(level string) (customLog *Logger, err error) {
 	return log, nil
 }
 
-func (log *Logger) WithLogging() func(next http.Handler) http.Handler {
-	return func(next http.Handler) http.Handler {
+func (log *Logger) WithLogging() func(h http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 			t1 := time.Now()
@@ -51,7 +51,7 @@ func (log *Logger) WithLogging() func(next http.Handler) http.Handler {
 					zap.Duration("duration", time.Since(t1)),
 					zap.Int("size", ww.BytesWritten()))
 			}()
-			next.ServeHTTP(ww, r)
+			h.ServeHTTP(ww, r)
 		}
 		return http.HandlerFunc(fn)
 	}

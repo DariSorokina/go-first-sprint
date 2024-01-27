@@ -7,6 +7,7 @@ import (
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
 	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
+	"github.com/DariSorokina/go-first-sprint.git/internal/middleware"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -25,6 +26,7 @@ func NewServer(app *app.App, flagConfig *config.FlagConfig, log *logger.Logger) 
 func (server *Server) newRouter() chi.Router {
 	router := chi.NewRouter()
 	router.Use(server.log.WithLogging())
+	router.Use(middleware.CompressorMiddleware())
 	router.Post("/", server.handlers.shortenerHandler)
 	router.Get("/{id}", server.handlers.originalHandler)
 	router.Post("/api/shorten", server.handlers.shortenerHandlerJSON)
