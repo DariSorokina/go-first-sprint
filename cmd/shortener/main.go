@@ -20,7 +20,9 @@ func main() {
 	}
 
 	storage := storage.NewStorage(flagConfig.FlagFileStoragePath)
-	defer storage.CloseFile()
+	if flagConfig.FlagFileStoragePath != "" {
+		defer storage.CloseFile()
+	}
 
 	app := app.NewApp(storage)
 	serv := server.NewServer(app, flagConfig, l)

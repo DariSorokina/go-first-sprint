@@ -13,9 +13,8 @@ type Storage struct {
 }
 
 func NewStorage(fileName string) *Storage {
+	fileStorage := NewFileStorage(fileName)
 	if fileName != "" {
-		fileStorage := NewFileStorage(fileName)
-
 		var url = []*fileLine{
 			{
 				ShortURL:    "d41d8cd98f",
@@ -56,11 +55,13 @@ func (storage *Storage) SetValue(shortURL, longURL string) {
 			OriginalURL: longURL,
 		},
 	}
-
-	err := storage.fileStorage.producer.WriteURL(url[0])
-	if err != nil {
-		log.Fatal(err)
+	if storage.fileStorage.fileName != "" {
+		err := storage.fileStorage.producer.WriteURL(url[0])
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+
 	storage.originalToShort, storage.shortToOriginal = AddURLsToMap(url, storage.originalToShort, storage.shortToOriginal)
 }
 
