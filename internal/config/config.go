@@ -6,9 +6,10 @@ import (
 )
 
 type FlagConfig struct {
-	FlagRunAddr  string
-	FlagBaseURL  string
-	FlagLogLevel string
+	FlagRunAddr         string
+	FlagBaseURL         string
+	FlagLogLevel        string
+	FlagFileStoragePath string
 }
 
 func NewFlagConfig() *FlagConfig {
@@ -20,6 +21,7 @@ func ParseFlags() (flagConfig *FlagConfig) {
 	flag.StringVar(&flagConfig.FlagRunAddr, "a", ":8080", "address and port to run server")
 	flag.StringVar(&flagConfig.FlagBaseURL, "b", "http://localhost:8080/", "prefix for trimed URL")
 	flag.StringVar(&flagConfig.FlagLogLevel, "l", "info", "log level")
+	flag.StringVar(&flagConfig.FlagFileStoragePath, "f", "/Users/dariasorokina/Desktop/yp_golang/go-first-sprint/cmd/shortener/short-url-db.json", "file storage path")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("SERVER_ADDRESS"); envRunAddr != "" {
@@ -30,6 +32,9 @@ func ParseFlags() (flagConfig *FlagConfig) {
 	}
 	if envLogLevel := os.Getenv("LOG_LEVEL"); envLogLevel != "" {
 		flagConfig.FlagLogLevel = envLogLevel
+	}
+	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
+		flagConfig.FlagFileStoragePath = envFileStoragePath
 	}
 	return
 }

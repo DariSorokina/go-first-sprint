@@ -47,7 +47,9 @@ func TestRouter(t *testing.T) {
 		log.Fatal("Failed to create logger:", err)
 	}
 
-	storage := storage.NewStorage()
+	storage := storage.NewStorage(flagConfig.FlagFileStoragePath)
+	defer storage.CloseFile()
+
 	app := app.NewApp(storage)
 	serv := NewServer(app, flagConfig, l)
 	testServer := httptest.NewServer(serv.newRouter())

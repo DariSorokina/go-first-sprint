@@ -1,14 +1,45 @@
 package storage
 
-import "sync"
+import (
+	"log"
+	"sync"
+)
 
 type Storage struct {
+	fileStorage     *FileStorage
 	originalToShort map[string]string
 	shortToOriginal map[string]string
 	mutex           sync.RWMutex
 }
 
-func NewStorage() *Storage {
+func NewStorage(fileName string) *Storage {
+	if fileName != "" {
+		fileStorage := NewFileStorage(fileName)
+
+		var url = []*fileLine{
+			{
+				ShortURL:    "d41d8cd98f",
+				OriginalURL: "https://practicum.yandex.ru/",
+			},
+		}
+
+		readURLs, err := fileStorage.consumer.ReadURLs()
+		if err != nil {
+			log.Fatal(err)
+		}
+		obtainedUrls := append(url, readURLs...)
+
+		originalToShort := make(map[string]string)
+		shortToOriginal := make(map[string]string)
+		originalToShort, shortToOriginal = AddURLsToMap(obtainedUrls, originalToShort, shortToOriginal)
+
+		return &Storage{
+			fileStorage:     fileStorage,
+			originalToShort: originalToShort,
+			shortToOriginal: shortToOriginal,
+		}
+	}
+
 	return &Storage{
 		originalToShort: map[string]string{"https://practicum.yandex.ru/": "d41d8cd98f"},
 		shortToOriginal: map[string]string{"d41d8cd98f": "https://practicum.yandex.ru/"},
@@ -19,8 +50,18 @@ func (storage *Storage) SetValue(shortURL, longURL string) {
 	storage.mutex.Lock()
 	defer storage.mutex.Unlock()
 
-	storage.originalToShort[longURL] = shortURL
-	storage.shortToOriginal[shortURL] = longURL
+	var url = []*fileLine{
+		{
+			ShortURL:    shortURL,
+			OriginalURL: longURL,
+		},
+	}
+
+	err := storage.fileStorage.producer.WriteURL(url[0])
+	if err != nil {
+		log.Fatal(err)
+	}
+	storage.originalToShort, storage.shortToOriginal = AddURLsToMap(url, storage.originalToShort, storage.shortToOriginal)
 }
 
 func (storage *Storage) GetShort(longURL string) (shortURL string) {
@@ -43,4 +84,9 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 		return
 	}
 	return ""
+}
+
+func (storage *Storage) CloseFile() {
+	storage.fileStorage.producer.Close()
+	storage.fileStorage.consumer.Close()
 }
