@@ -26,6 +26,7 @@ func NewFileStorage(fileName string) *FileStorage {
 	return &FileStorage{
 		producer: producer,
 		consumer: consumer,
+		fileName: fileName,
 	}
 }
 

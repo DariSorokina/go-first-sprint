@@ -55,6 +55,7 @@ func (storage *Storage) SetValue(shortURL, longURL string) {
 			OriginalURL: longURL,
 		},
 	}
+
 	if storage.fileStorage.fileName != "" {
 		err := storage.fileStorage.producer.WriteURL(url[0])
 		if err != nil {
