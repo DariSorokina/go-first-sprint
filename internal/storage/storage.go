@@ -6,14 +6,14 @@ import (
 )
 
 type Storage struct {
-	fileStorage     *FileStorage
+	fileStorage     *fileStorage
 	originalToShort map[string]string
 	shortToOriginal map[string]string
 	mutex           sync.RWMutex
 }
 
 func NewStorage(fileName string) *Storage {
-	fileStorage := NewFileStorage(fileName)
+	fileStorage := newFileStorage(fileName)
 	if fileName != "" {
 		var url = []*fileLine{
 			{
@@ -22,7 +22,7 @@ func NewStorage(fileName string) *Storage {
 			},
 		}
 
-		readURLs, err := fileStorage.consumer.ReadURLs()
+		readURLs, err := fileStorage.consumer.readURLs()
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -30,7 +30,7 @@ func NewStorage(fileName string) *Storage {
 
 		originalToShort := make(map[string]string)
 		shortToOriginal := make(map[string]string)
-		originalToShort, shortToOriginal = AddURLsToMap(obtainedUrls, originalToShort, shortToOriginal)
+		originalToShort, shortToOriginal = addURLsToMap(obtainedUrls, originalToShort, shortToOriginal)
 
 		return &Storage{
 			fileStorage:     fileStorage,
@@ -57,13 +57,13 @@ func (storage *Storage) SetValue(shortURL, longURL string) {
 	}
 
 	if storage.fileStorage.fileName != "" {
-		err := storage.fileStorage.producer.WriteURL(url[0])
+		err := storage.fileStorage.producer.writeURL(url[0])
 		if err != nil {
 			log.Fatal(err)
 		}
 	}
 
-	storage.originalToShort, storage.shortToOriginal = AddURLsToMap(url, storage.originalToShort, storage.shortToOriginal)
+	storage.originalToShort, storage.shortToOriginal = addURLsToMap(url, storage.originalToShort, storage.shortToOriginal)
 }
 
 func (storage *Storage) GetShort(longURL string) (shortURL string) {
@@ -89,6 +89,6 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 }
 
 func (storage *Storage) CloseFile() {
-	storage.fileStorage.producer.Close()
-	storage.fileStorage.consumer.Close()
+	storage.fileStorage.producer.close()
+	storage.fileStorage.consumer.close()
 }
