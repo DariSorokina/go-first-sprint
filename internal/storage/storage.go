@@ -95,7 +95,7 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 }
 
 func (storage *Storage) PingPostgresql() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 100000*time.Second)
 	defer cancel()
 	if err := storage.dbStorage.db.PingContext(ctx); err != nil {
 		return err
