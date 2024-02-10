@@ -8,8 +8,8 @@ type postgresqlDB struct {
 	db *sql.DB
 }
 
-func newPostgresqlDB(cofigString string) *postgresqlDB {
-	db, err := sql.Open("pgx", cofigString)
+func newPostgresqlDB(cofigBDString string) *postgresqlDB {
+	db, err := sql.Open("pgx", cofigBDString)
 	if err != nil {
 		panic(err) // TODO
 	}

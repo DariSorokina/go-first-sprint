@@ -15,7 +15,8 @@ type Storage struct {
 	mutex           sync.RWMutex
 }
 
-func NewStorage(fileName string) *Storage {
+func NewStorage(cofigBDString string, fileName string) *Storage {
+	dbStorage := newPostgresqlDB(cofigBDString)
 	fileStorage := newFileStorage(fileName)
 	if fileName != "" {
 		var url = []*fileLine{
@@ -36,6 +37,7 @@ func NewStorage(fileName string) *Storage {
 		originalToShort, shortToOriginal = addURLsToMap(obtainedUrls, originalToShort, shortToOriginal)
 
 		return &Storage{
+			dbStorage:       dbStorage,
 			fileStorage:     fileStorage,
 			originalToShort: originalToShort,
 			shortToOriginal: shortToOriginal,
@@ -43,6 +45,7 @@ func NewStorage(fileName string) *Storage {
 	}
 
 	return &Storage{
+		dbStorage:       dbStorage,
 		originalToShort: map[string]string{"https://practicum.yandex.ru/": "d41d8cd98f"},
 		shortToOriginal: map[string]string{"d41d8cd98f": "https://practicum.yandex.ru/"},
 	}
