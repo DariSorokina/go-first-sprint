@@ -23,6 +23,15 @@ func newHandlers(app *app.App, flagConfig *config.FlagConfig) *handlers {
 	return &handlers{app: app, flagConfig: flagConfig}
 }
 
+func (handlers *handlers) pingPostgresqlHandler(res http.ResponseWriter, req *http.Request) {
+	err := handlers.app.PingPostgresql()
+	if err != nil {
+		http.Error(res, "Storage connection failed", http.StatusInternalServerError)
+		return
+	}
+	res.WriteHeader(http.StatusOK)
+}
+
 func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Request) {
 	var response string
 	requestBody, err := io.ReadAll(req.Body)

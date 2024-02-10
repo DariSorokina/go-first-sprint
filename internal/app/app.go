@@ -29,6 +29,12 @@ func (app *App) ToOriginalURL(shortURL string) (longURL string) {
 	return
 }
 
+// а точно ли нужно метод прокидывать так, или есть альтернативы?
+func (app *App) PingPostgresql() error {
+	err := app.storage.PingPostgresql()
+	return err
+}
+
 func encodeString(data string) string {
 	encodedMD5 := md5.Sum([]byte(data))
 	encodedMD5Trimed := encodedMD5[:5]

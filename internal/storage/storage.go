@@ -1,11 +1,14 @@
 package storage
 
 import (
+	"context"
 	"log"
 	"sync"
+	"time"
 )
 
 type Storage struct {
+	dbStorage       *postgresqlDB
 	fileStorage     *fileStorage
 	originalToShort map[string]string
 	shortToOriginal map[string]string
@@ -88,7 +91,20 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 	return ""
 }
 
+func (storage *Storage) PingPostgresql() error {
+	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
+	defer cancel()
+	if err := storage.dbStorage.db.PingContext(ctx); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (storage *Storage) CloseFile() {
 	storage.fileStorage.producer.close()
 	storage.fileStorage.consumer.close()
+}
+
+func (storage *Storage) CloseDBConnection() {
+	storage.dbStorage.close()
 }
