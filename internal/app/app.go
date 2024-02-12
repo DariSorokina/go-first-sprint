@@ -8,10 +8,10 @@ import (
 )
 
 type App struct {
-	storage *storage.Storage
+	storage storage.Database
 }
 
-func NewApp(storage *storage.Storage) *App {
+func NewApp(storage storage.Database) *App {
 	return &App{storage: storage}
 }
 
@@ -31,7 +31,7 @@ func (app *App) ToOriginalURL(shortURL string) (longURL string) {
 
 // а точно ли нужно метод прокидывать так, или есть альтернативы?
 func (app *App) PingPostgresql() error {
-	err := app.storage.PingPostgresql()
+	err := app.storage.Ping()
 	return err
 }
 

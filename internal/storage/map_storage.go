@@ -1,22 +1,18 @@
 package storage
 
 import (
-	"context"
 	"log"
 	"sync"
-	"time"
 )
 
 type Storage struct {
-	dbStorage       *postgresqlDB
 	fileStorage     *fileStorage
 	originalToShort map[string]string
 	shortToOriginal map[string]string
 	mutex           sync.RWMutex
 }
 
-func NewStorage(cofigBDString string, fileName string) *Storage {
-	dbStorage := newPostgresqlDB(cofigBDString)
+func NewStorage(fileName string) *Storage {
 	fileStorage := newFileStorage(fileName)
 	if fileName != "" {
 		var url = []*fileLine{
@@ -37,7 +33,6 @@ func NewStorage(cofigBDString string, fileName string) *Storage {
 		originalToShort, shortToOriginal = addURLsToMap(obtainedUrls, originalToShort, shortToOriginal)
 
 		return &Storage{
-			dbStorage:       dbStorage,
 			fileStorage:     fileStorage,
 			originalToShort: originalToShort,
 			shortToOriginal: shortToOriginal,
@@ -45,7 +40,6 @@ func NewStorage(cofigBDString string, fileName string) *Storage {
 	}
 
 	return &Storage{
-		dbStorage:       dbStorage,
 		originalToShort: map[string]string{"https://practicum.yandex.ru/": "d41d8cd98f"},
 		shortToOriginal: map[string]string{"d41d8cd98f": "https://practicum.yandex.ru/"},
 	}
@@ -94,20 +88,11 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 	return ""
 }
 
-func (storage *Storage) PingPostgresql() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 100000*time.Second)
-	defer cancel()
-	if err := storage.dbStorage.db.PingContext(ctx); err != nil {
-		return err
-	}
+func (storage *Storage) Ping() error {
 	return nil
 }
 
-func (storage *Storage) CloseFile() {
+func (storage *Storage) Close() {
 	storage.fileStorage.producer.close()
 	storage.fileStorage.consumer.close()
-}
-
-func (storage *Storage) CloseDBConnection() {
-	storage.dbStorage.close()
 }
