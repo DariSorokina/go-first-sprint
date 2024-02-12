@@ -38,8 +38,8 @@ func ParseFlags() (flagConfig *FlagConfig) {
 	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
 		flagConfig.FlagFileStoragePath = envFileStoragePath
 	}
-	if envFlagPostgresqlDSN := os.Getenv("FILE_STORAGE_PATH"); envFlagPostgresqlDSN != "" {
-		flagConfig.FlagPostgresqlDSN = envFlagPostgresqlDSN
+	if envPostgresqlDSN := os.Getenv("DATABASE_DSN"); envPostgresqlDSN != "" {
+		flagConfig.FlagPostgresqlDSN = envPostgresqlDSN
 	}
 	return
 }
