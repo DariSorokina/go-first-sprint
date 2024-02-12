@@ -30,30 +30,46 @@ func NewPostgresqlDB(cofigBDString string) *PostgresqlDB {
 		panic(err) // TODO
 	}
 
-	return &PostgresqlDB{db: db}
-}
-
-func (postgresqlDB *PostgresqlDB) createTables() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	var err error
-
-	_, err = postgresqlDB.db.ExecContext(ctx, createSchemaQuery)
+	_, err = db.ExecContext(ctx, createSchemaQuery)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	_, err = postgresqlDB.db.ExecContext(ctx, createTableQuery)
+	_, err = db.ExecContext(ctx, createTableQuery)
 	if err != nil {
-		return err
+		panic(err)
 	}
-	_, err = postgresqlDB.db.ExecContext(ctx, writeTestURLsQuery)
+	_, err = db.ExecContext(ctx, writeTestURLsQuery)
 	if err != nil {
-		return err
+		panic(err)
 	}
 
-	return nil
+	return &PostgresqlDB{db: db}
 }
+
+// func (postgresqlDB *PostgresqlDB) CreateTables() error {
+// 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+// 	defer cancel()
+
+// 	var err error
+
+// 	_, err = postgresqlDB.db.ExecContext(ctx, createSchemaQuery)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = postgresqlDB.db.ExecContext(ctx, createTableQuery)
+// 	if err != nil {
+// 		return err
+// 	}
+// 	_, err = postgresqlDB.db.ExecContext(ctx, writeTestURLsQuery)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+// }
 
 func (postgresqlDB *PostgresqlDB) SetValue(shortURL, longURL string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
