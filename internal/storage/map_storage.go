@@ -89,7 +89,7 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 }
 
 func (storage *Storage) Ping() error {
-	return nil
+	return nil //TODO
 }
 
 func (storage *Storage) Close() {

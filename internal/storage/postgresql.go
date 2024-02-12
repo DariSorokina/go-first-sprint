@@ -47,7 +47,6 @@ func (postgresqlDB *PostgresqlDB) createTables() error {
 	if err != nil {
 		return err
 	}
-
 	_, err = postgresqlDB.db.ExecContext(ctx, writeTestURLsQuery)
 	if err != nil {
 		return err
