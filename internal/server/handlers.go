@@ -14,6 +14,16 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
+type originalURL struct {
+	CorrelationID string `json:"correlation_id"`
+	OriginalURL   string `json:"original_url"`
+}
+
+type shortURL struct {
+	CorrelationID string `json:"correlation_id"`
+	ShortURL      string `json:"short_url"`
+}
+
 type handlers struct {
 	app        *app.App
 	flagConfig *config.FlagConfig
@@ -91,6 +101,43 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
+	res.Header().Set("Content-Type", "application/json")
+	res.WriteHeader(http.StatusCreated)
+	res.Write(resp)
+}
+
+func (handlers *handlers) shortenerBatchHandler(res http.ResponseWriter, req *http.Request) {
+	var input []originalURL
+	var output []shortURL
+	var response string
+
+	requestBody, err := io.ReadAll(req.Body)
+	if err != nil {
+		http.Error(res, "Bad request body", http.StatusBadRequest)
+		return
+	}
+
+	err = json.Unmarshal(requestBody, &input)
+
+	for _, inputSample := range input {
+		shortenedURL := handlers.app.ToShortenURL(inputSample.OriginalURL)
+
+		response, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
+		if err != nil {
+			http.Error(res, "Bad URL path provided", http.StatusInternalServerError)
+			log.Println("Failed to join provided URL path with short URL", err)
+			return
+		}
+
+		output = append(output, shortURL{CorrelationID: inputSample.CorrelationID, ShortURL: response})
+	}
+
+	resp, err := json.Marshal(output)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
 	res.Header().Set("Content-Type", "application/json")
 	res.WriteHeader(http.StatusCreated)
 	res.Write(resp)
