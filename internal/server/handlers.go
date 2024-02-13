@@ -117,7 +117,10 @@ func (handlers *handlers) shortenerBatchHandler(res http.ResponseWriter, req *ht
 		return
 	}
 
-	err = json.Unmarshal(requestBody, &input)
+	if err = json.Unmarshal(requestBody, &input); err != nil {
+		http.Error(res, err.Error(), http.StatusBadRequest)
+		return
+	}
 
 	for _, inputSample := range input {
 		shortenedURL := handlers.app.ToShortenURL(inputSample.OriginalURL)
