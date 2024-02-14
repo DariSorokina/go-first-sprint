@@ -77,8 +77,8 @@ func TestRouter(t *testing.T) {
 			requestBody: bytes.NewBuffer([]byte("https://practicum.yandex.ru/")),
 			requestPath: "",
 			expectedData: expectedData{
-				expectedContentType: "text/plain",
-				expectedStatusCode:  http.StatusCreated,
+				expectedContentType: "text/plain; charset=utf-8",
+				expectedStatusCode:  http.StatusConflict,
 				expectedBody:        "http://localhost:8080/d41d8cd98f",
 				expectedLocation:    "",
 			},
@@ -102,7 +102,7 @@ func TestRouter(t *testing.T) {
 			requestPath: "/api/shorten",
 			expectedData: expectedData{
 				expectedContentType: "application/json",
-				expectedStatusCode:  http.StatusCreated,
+				expectedStatusCode:  http.StatusConflict,
 				expectedBody:        "{\"result\":\"http://localhost:8080/d41d8cd98f\"}",
 				expectedLocation:    "",
 			},
