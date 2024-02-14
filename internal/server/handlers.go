@@ -1,7 +1,6 @@
 package server
 
 import (
-	"bytes"
 	"encoding/json"
 	"errors"
 	"io"
@@ -81,15 +80,14 @@ func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Re
 func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *http.Request) {
 	var request models.Request
 	var response models.Response
-	var buf bytes.Buffer
 
-	_, err := buf.ReadFrom(req.Body)
+	requestBody, err := io.ReadAll(req.Body)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
 
-	if err = json.Unmarshal(buf.Bytes(), &request); err != nil {
+	if err = json.Unmarshal(requestBody, &request); err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}

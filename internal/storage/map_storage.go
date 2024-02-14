@@ -26,7 +26,7 @@ func NewStorage(fileName string) *Storage {
 
 		readURLs, err := fileStorage.consumer.readURLs()
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 		obtainedUrls := append(url, readURLs...)
 
@@ -61,7 +61,7 @@ func (storage *Storage) SetValue(shortURL, longURL string) {
 	if storage.fileStorage.fileName != "" {
 		err := storage.fileStorage.producer.writeURL(url[0])
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
 
@@ -91,7 +91,7 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 }
 
 func (storage *Storage) Ping() error {
-	return nil //TODO
+	return nil
 }
 
 func (storage *Storage) Close() {

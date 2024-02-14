@@ -1,6 +1,7 @@
 package logger
 
 import (
+	"log"
 	"net/http"
 	"time"
 
@@ -13,7 +14,10 @@ type Logger struct {
 }
 
 func newLogger() *Logger {
-	customLog, _ := zap.NewProduction()
+	customLog, err := zap.NewProduction()
+	if err != nil {
+		log.Println(err)
+	}
 	return &Logger{customLog: customLog}
 }
 

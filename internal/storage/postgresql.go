@@ -29,7 +29,7 @@ type PostgresqlDB struct {
 func NewPostgresqlDB(cofigBDString string) *PostgresqlDB {
 	db, err := sql.Open("pgx", cofigBDString)
 	if err != nil {
-		panic(err) // TODO
+		log.Println(err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -37,20 +37,20 @@ func NewPostgresqlDB(cofigBDString string) *PostgresqlDB {
 
 	_, err = db.ExecContext(ctx, createSchemaQuery)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 	_, err = db.ExecContext(ctx, createTableQuery)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 	_, err = db.ExecContext(ctx, createIndexQuery)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 
 	_, err = db.ExecContext(ctx, writeTestURLsQuery)
 	if err != nil {
-		panic(err)
+		log.Println(err)
 	}
 
 	return &PostgresqlDB{db: db}
@@ -62,7 +62,7 @@ func (postgresqlDB *PostgresqlDB) SetValue(shortURL, longURL string) {
 
 	_, err := postgresqlDB.db.ExecContext(ctx, writeURLsQuery, longURL, shortURL)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 }
