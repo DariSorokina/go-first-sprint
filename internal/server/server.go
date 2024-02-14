@@ -29,9 +29,9 @@ func (server *Server) newRouter() chi.Router {
 	router.Use(middleware.CompressorMiddleware())
 	router.Get("/ping", server.handlers.pingPostgresqlHandler)
 	router.Post("/", server.handlers.shortenerHandler)
-	router.Get("/{id}", server.handlers.originalHandler)
-	router.Post("/api/shorten/batch", server.handlers.shortenerBatchHandler)
 	router.Post("/api/shorten", server.handlers.shortenerHandlerJSON)
+	router.Post("/api/shorten/batch", server.handlers.shortenerBatchHandler)
+	router.Get("/{id}", server.handlers.originalHandler)
 	return router
 }
 

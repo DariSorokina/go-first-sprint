@@ -4,7 +4,7 @@ import "github.com/DariSorokina/go-first-sprint.git/internal/config"
 
 type Database interface {
 	SetValue(shortURL, longURL string)
-	GetShort(longURL string) (shortURL string)
+	GetShort(longURL string) (shortURL string, err error)
 	GetOriginal(shortURL string) (longURL string)
 	Ping() error
 	Close()

@@ -3,6 +3,7 @@ package server
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"io"
 	"log"
 	"net/http"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
+	customErrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
 	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 	"github.com/go-chi/chi/v5"
 )
@@ -42,6 +44,13 @@ func (handlers *handlers) pingPostgresqlHandler(res http.ResponseWriter, req *ht
 	res.WriteHeader(http.StatusOK)
 }
 
+func (handlers *handlers) originalHandler(res http.ResponseWriter, req *http.Request) {
+	idValue := chi.URLParam(req, "id")
+	correspondingURL := handlers.app.ToOriginalURL(idValue)
+	res.Header().Set("Location", correspondingURL)
+	res.WriteHeader(http.StatusTemporaryRedirect)
+}
+
 func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Request) {
 	var response string
 	requestBody, err := io.ReadAll(req.Body)
@@ -50,8 +59,7 @@ func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	shortenedURL := handlers.app.ToShortenURL(string(requestBody))
-
+	shortenedURL, errShortURL := handlers.app.ToShortenURL(string(requestBody))
 	response, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
 	if err != nil {
 		http.Error(res, "Bad URL path provided", http.StatusInternalServerError)
@@ -59,16 +67,14 @@ func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	res.Header().Set("content-type", "text/plain")
-	res.WriteHeader(http.StatusCreated)
-	res.Write([]byte(response))
-}
+	if errors.Is(errShortURL, customErrors.ShortURLAlreadyExistError) {
+		res.WriteHeader(http.StatusConflict)
+	} else {
+		res.WriteHeader(http.StatusCreated)
+	}
 
-func (handlers *handlers) originalHandler(res http.ResponseWriter, req *http.Request) {
-	idValue := chi.URLParam(req, "id")
-	correspondingURL := handlers.app.ToOriginalURL(idValue)
-	res.Header().Set("Location", correspondingURL)
-	res.WriteHeader(http.StatusTemporaryRedirect)
+	res.Header().Set("content-type", "text/plain")
+	res.Write([]byte(response))
 }
 
 func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *http.Request) {
@@ -87,7 +93,7 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 		return
 	}
 
-	shortenedURL := handlers.app.ToShortenURL(string(request.OriginalURL))
+	shortenedURL, errShortURL := handlers.app.ToShortenURL(string(request.OriginalURL))
 
 	response.ShortenURL, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
 	if err != nil {
@@ -101,8 +107,14 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	if errors.Is(errShortURL, customErrors.ShortURLAlreadyExistError) {
+		res.WriteHeader(http.StatusConflict)
+	} else {
+		res.WriteHeader(http.StatusCreated)
+	}
+
 	res.Header().Set("Content-Type", "application/json")
-	res.WriteHeader(http.StatusCreated)
 	res.Write(resp)
 }
 
@@ -123,7 +135,7 @@ func (handlers *handlers) shortenerBatchHandler(res http.ResponseWriter, req *ht
 	}
 
 	for _, inputSample := range input {
-		shortenedURL := handlers.app.ToShortenURL(inputSample.OriginalURL)
+		shortenedURL, _ := handlers.app.ToShortenURL(inputSample.OriginalURL)
 
 		response, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
 		if err != nil {

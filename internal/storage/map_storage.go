@@ -3,6 +3,8 @@ package storage
 import (
 	"log"
 	"sync"
+
+	customErrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
 )
 
 type Storage struct {
@@ -66,15 +68,15 @@ func (storage *Storage) SetValue(shortURL, longURL string) {
 	storage.originalToShort, storage.shortToOriginal = addURLsToMap(url, storage.originalToShort, storage.shortToOriginal)
 }
 
-func (storage *Storage) GetShort(longURL string) (shortURL string) {
+func (storage *Storage) GetShort(longURL string) (shortURL string, err error) {
 	storage.mutex.RLock()
 	defer storage.mutex.RUnlock()
 
 	if value, ok := storage.originalToShort[longURL]; ok {
 		shortURL = value
-		return shortURL
+		return shortURL, customErrors.ShortURLAlreadyExistError
 	}
-	return ""
+	return "", nil
 }
 
 func (storage *Storage) GetOriginal(shortURL string) (longURL string) {

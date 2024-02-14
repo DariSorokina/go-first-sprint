@@ -15,9 +15,9 @@ func NewApp(storage storage.Database) *App {
 	return &App{storage: storage}
 }
 
-func (app *App) ToShortenURL(longURL string) (shortURL string) {
-	shortURL = app.storage.GetShort(longURL)
-	if shortURL == "" {
+func (app *App) ToShortenURL(longURL string) (shortURL string, err error) {
+	shortURL, err = app.storage.GetShort(longURL)
+	if err == nil {
 		shortURL = encodeString(longURL)
 		app.storage.SetValue(shortURL, longURL)
 	}
