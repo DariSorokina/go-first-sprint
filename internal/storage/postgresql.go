@@ -6,7 +6,7 @@ import (
 	"log"
 	"time"
 
-	customErrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
+	customerrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -73,7 +73,7 @@ func (postgresqlDB *PostgresqlDB) GetShort(longURL string) (shortURL string, err
 
 	err := postgresqlDB.db.QueryRowContext(ctx, readShortURLQuery, longURL).Scan(&shortURL)
 	if err != nil {
-		return "", customErrors.ShortURLAlreadyExistError
+		return "", customerrors.ErrShortURLAlreadyExist
 	}
 
 	return shortURL, nil

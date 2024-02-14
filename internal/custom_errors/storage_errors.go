@@ -1,5 +1,5 @@
-package customErrors
+package customerrors
 
 import "errors"
 
-var ShortURLAlreadyExistError = errors.New("Corresponding short URL already exists")
+var ErrShortURLAlreadyExist = errors.New("corresponding short URL already exists")

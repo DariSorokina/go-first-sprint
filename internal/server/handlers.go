@@ -11,7 +11,7 @@ import (
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
-	customErrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
+	customerrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
 	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 	"github.com/go-chi/chi/v5"
 )
@@ -67,7 +67,7 @@ func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
-	if errors.Is(errShortURL, customErrors.ShortURLAlreadyExistError) {
+	if errors.Is(errShortURL, customerrors.ErrShortURLAlreadyExist) {
 		res.WriteHeader(http.StatusConflict)
 	} else {
 		res.WriteHeader(http.StatusCreated)
@@ -108,7 +108,7 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 		return
 	}
 
-	if errors.Is(errShortURL, customErrors.ShortURLAlreadyExistError) {
+	if errors.Is(errShortURL, customerrors.ErrShortURLAlreadyExist) {
 		res.WriteHeader(http.StatusConflict)
 	} else {
 		res.WriteHeader(http.StatusCreated)

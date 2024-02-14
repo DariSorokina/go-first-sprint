@@ -4,7 +4,7 @@ import (
 	"log"
 	"sync"
 
-	customErrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
+	customerrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
 )
 
 type Storage struct {
@@ -74,7 +74,7 @@ func (storage *Storage) GetShort(longURL string) (shortURL string, err error) {
 
 	if value, ok := storage.originalToShort[longURL]; ok {
 		shortURL = value
-		return shortURL, customErrors.ShortURLAlreadyExistError
+		return shortURL, customerrors.ErrShortURLAlreadyExist
 	}
 	return "", nil
 }
