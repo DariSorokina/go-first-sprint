@@ -15,7 +15,7 @@ const (
 	createTableQuery  = `CREATE TABLE IF NOT EXISTS content.urls (
 		originalURL TEXT, 
 		shortURL TEXT);`
-	createIndexQuery     = `CREATE INDEX originalURL ON content.urls (originalURL)`
+	createIndexQuery     = `CREATE INDEX IF NOT EXISTS originalURL ON content.urls (originalURL)`
 	writeTestURLsQuery   = `INSERT INTO content.urls (originalURL, shortURL) VALUES ('https://practicum.yandex.ru/', 'd41d8cd98f');`
 	readShortURLQuery    = `SELECT shortURL FROM content.urls WHERE originalURL = $1;`
 	readOriginalURLQuery = `SELECT originalURL FROM content.urls WHERE shortURL = $1;`
@@ -73,10 +73,10 @@ func (postgresqlDB *PostgresqlDB) GetShort(longURL string) (shortURL string, err
 
 	err := postgresqlDB.db.QueryRowContext(ctx, readShortURLQuery, longURL).Scan(&shortURL)
 	if err != nil {
-		return "", customerrors.ErrShortURLAlreadyExist
+		return "", nil
 	}
 
-	return shortURL, nil
+	return shortURL, customerrors.ErrShortURLAlreadyExist
 }
 
 func (postgresqlDB *PostgresqlDB) GetOriginal(shortURL string) (longURL string) {
