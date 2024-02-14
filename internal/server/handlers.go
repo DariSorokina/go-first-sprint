@@ -67,13 +67,14 @@ func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Re
 		return
 	}
 
+	res.Header().Set("content-type", "text/plain")
+
 	if errors.Is(errShortURL, customerrors.ErrShortURLAlreadyExist) {
 		res.WriteHeader(http.StatusConflict)
 	} else {
 		res.WriteHeader(http.StatusCreated)
 	}
 
-	res.Header().Set("content-type", "text/plain")
 	res.Write([]byte(response))
 }
 
@@ -108,13 +109,14 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 		return
 	}
 
+	res.Header().Set("Content-Type", "application/json")
+
 	if errors.Is(errShortURL, customerrors.ErrShortURLAlreadyExist) {
 		res.WriteHeader(http.StatusConflict)
 	} else {
 		res.WriteHeader(http.StatusCreated)
 	}
 
-	res.Header().Set("Content-Type", "application/json")
 	res.Write(resp)
 }
 
