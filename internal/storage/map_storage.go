@@ -3,8 +3,6 @@ package storage
 import (
 	"log"
 	"sync"
-
-	customerrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
 )
 
 type Storage struct {
@@ -74,7 +72,7 @@ func (storage *Storage) GetShort(longURL string) (shortURL string, err error) {
 
 	if value, ok := storage.originalToShort[longURL]; ok {
 		shortURL = value
-		return shortURL, customerrors.ErrShortURLAlreadyExist
+		return shortURL, ErrShortURLAlreadyExist
 	}
 	return "", nil
 }
@@ -95,6 +93,10 @@ func (storage *Storage) Ping() error {
 }
 
 func (storage *Storage) Close() {
-	storage.fileStorage.producer.close()
-	storage.fileStorage.consumer.close()
+	if storage.fileStorage.producer != nil {
+		storage.fileStorage.producer.close()
+	}
+	if storage.fileStorage.consumer != nil {
+		storage.fileStorage.consumer.close()
+	}
 }

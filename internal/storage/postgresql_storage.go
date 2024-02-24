@@ -6,7 +6,6 @@ import (
 	"log"
 	"time"
 
-	customerrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -16,7 +15,6 @@ const (
 		originalURL TEXT, 
 		shortURL TEXT);`
 	createIndexQuery     = `CREATE INDEX IF NOT EXISTS originalURL ON content.urls (originalURL)`
-	writeTestURLsQuery   = `INSERT INTO content.urls (originalURL, shortURL) VALUES ('https://practicum.yandex.ru/', 'd41d8cd98f');`
 	readShortURLQuery    = `SELECT shortURL FROM content.urls WHERE originalURL = $1;`
 	readOriginalURLQuery = `SELECT originalURL FROM content.urls WHERE shortURL = $1;`
 	writeURLsQuery       = `INSERT INTO content.urls (originalURL, shortURL) VALUES ($1, $2);`
@@ -48,11 +46,6 @@ func NewPostgresqlDB(cofigBDString string) *PostgresqlDB {
 		log.Println(err)
 	}
 
-	_, err = db.ExecContext(ctx, writeTestURLsQuery)
-	if err != nil {
-		log.Println(err)
-	}
-
 	return &PostgresqlDB{db: db}
 }
 
@@ -76,7 +69,7 @@ func (postgresqlDB *PostgresqlDB) GetShort(longURL string) (shortURL string, err
 		return "", nil
 	}
 
-	return shortURL, customerrors.ErrShortURLAlreadyExist
+	return shortURL, ErrShortURLAlreadyExist
 }
 
 func (postgresqlDB *PostgresqlDB) GetOriginal(shortURL string) (longURL string) {
@@ -101,5 +94,7 @@ func (postgresqlDB *PostgresqlDB) Ping() error {
 }
 
 func (postgresqlDB *PostgresqlDB) Close() {
-	postgresqlDB.db.Close()
+	if postgresqlDB.db != nil {
+		postgresqlDB.db.Close()
+	}
 }

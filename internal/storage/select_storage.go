@@ -1,6 +1,12 @@
 package storage
 
-import "github.com/DariSorokina/go-first-sprint.git/internal/config"
+import (
+	"errors"
+
+	"github.com/DariSorokina/go-first-sprint.git/internal/config"
+)
+
+var ErrShortURLAlreadyExist = errors.New("corresponding short URL already exists")
 
 type Database interface {
 	SetValue(shortURL, longURL string)

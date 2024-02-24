@@ -20,9 +20,7 @@ func main() {
 	}
 
 	storage := storage.SetStorage(flagConfig)
-	if flagConfig.FlagFileStoragePath != "" || flagConfig.FlagPostgresqlDSN != "" {
-		defer storage.Close()
-	}
+	defer storage.Close()
 
 	app := app.NewApp(storage)
 	serv := server.NewServer(app, flagConfig, l)

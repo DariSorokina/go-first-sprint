@@ -10,8 +10,8 @@ import (
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
-	customerrors "github.com/DariSorokina/go-first-sprint.git/internal/custom_errors"
 	"github.com/DariSorokina/go-first-sprint.git/internal/models"
+	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
 	"github.com/go-chi/chi/v5"
 )
 
@@ -35,7 +35,7 @@ func newHandlers(app *app.App, flagConfig *config.FlagConfig) *handlers {
 }
 
 func (handlers *handlers) pingPostgresqlHandler(res http.ResponseWriter, req *http.Request) {
-	err := handlers.app.PingPostgresql()
+	err := handlers.app.Ping()
 	if err != nil {
 		http.Error(res, "Storage connection failed", http.StatusInternalServerError)
 		return
@@ -68,7 +68,7 @@ func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Re
 
 	res.Header().Set("content-type", "text/plain")
 
-	if errors.Is(errShortURL, customerrors.ErrShortURLAlreadyExist) {
+	if errors.Is(errShortURL, storage.ErrShortURLAlreadyExist) {
 		res.WriteHeader(http.StatusConflict)
 	} else {
 		res.WriteHeader(http.StatusCreated)
@@ -109,7 +109,7 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 
 	res.Header().Set("Content-Type", "application/json")
 
-	if errors.Is(errShortURL, customerrors.ErrShortURLAlreadyExist) {
+	if errors.Is(errShortURL, storage.ErrShortURLAlreadyExist) {
 		res.WriteHeader(http.StatusConflict)
 	} else {
 		res.WriteHeader(http.StatusCreated)

@@ -17,10 +17,11 @@ func NewApp(storage storage.Database) *App {
 
 func (app *App) ToShortenURL(longURL string) (shortURL string, err error) {
 	shortURL, err = app.storage.GetShort(longURL)
-	if err == nil {
-		shortURL = encodeString(longURL)
-		app.storage.SetValue(shortURL, longURL)
+	if err != nil {
+		return
 	}
+	shortURL = encodeString(longURL)
+	app.storage.SetValue(shortURL, longURL)
 	return
 }
 
@@ -29,8 +30,7 @@ func (app *App) ToOriginalURL(shortURL string) (longURL string) {
 	return
 }
 
-// а точно ли нужно метод прокидывать так, или есть альтернативы?
-func (app *App) PingPostgresql() error {
+func (app *App) Ping() error {
 	err := app.storage.Ping()
 	return err
 }
