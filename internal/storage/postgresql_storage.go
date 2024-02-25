@@ -3,7 +3,6 @@ package storage
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"log"
 	"time"
 
@@ -106,7 +105,14 @@ func (postgresqlDB *PostgresqlDB) GetURLsByUserID(userID int) (urls []models.URL
 		urls = append(urls, url)
 	}
 
-	fmt.Println(urls)
+	rerr := rows.Close()
+	if rerr != nil {
+		log.Fatal(rerr)
+	}
+
+	if err := rows.Err(); err != nil {
+		log.Fatal(err)
+	}
 
 	return
 }
