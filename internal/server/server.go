@@ -29,13 +29,13 @@ func (server *Server) newRouter() chi.Router {
 	router.Use(server.log.WithLogging())
 	router.Use(middleware.CompressorMiddleware())
 	router.Get("/ping", server.handlers.pingPostgresqlHandler)
-	router.Post("/", server.handlers.shortenerHandler)
 	router.Post("/api/shorten", server.handlers.shortenerHandlerJSON)
 	router.Post("/api/shorten/batch", server.handlers.shortenerBatchHandler)
 	router.Get("/{id}", server.handlers.originalHandler)
-	router.Route("/api/user/urls", func(r chi.Router) {
+	router.Route("/", func(r chi.Router) {
 		r.Use(cookie.CookieMiddleware())
-		r.Get("/", server.handlers.urlsByIDHandler)
+		r.Post("/", server.handlers.shortenerHandler)
+		r.Get("/api/user/urls", server.handlers.urlsByIDHandler)
 	})
 	return router
 }
