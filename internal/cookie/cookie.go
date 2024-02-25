@@ -27,8 +27,8 @@ func generateUserID() int {
 	return randomNumber
 }
 
-func createJWTString() (string, error) {
-	generatedUserID := generateUserID()
+func createJWTString() (generatedUserID int, tokenString string, err error) {
+	generatedUserID = generateUserID()
 	generatedUsersIDs = append(generatedUsersIDs, generatedUserID)
 	fmt.Println(generatedUsersIDs)
 
@@ -39,12 +39,12 @@ func createJWTString() (string, error) {
 		UserID: generatedUserID,
 	})
 
-	tokenString, err := token.SignedString([]byte(SECRETKEY))
+	tokenString, err = token.SignedString([]byte(SECRETKEY))
 	if err != nil {
-		return "", err
+		return generatedUserID, "", err
 	}
 
-	return tokenString, nil
+	return generatedUserID, tokenString, nil
 }
 
 func getUserID(tokenString string) int {
@@ -71,12 +71,12 @@ func getUserID(tokenString string) int {
 	return claims.UserID
 }
 
-func createCookieClientID() *http.Cookie {
-	JWTString, err := createJWTString()
+func createCookieClientID() (generatedUserID int, cookie *http.Cookie) {
+	generatedUserID, JWTString, err := createJWTString()
 	if err != nil {
 		log.Println(err)
 	}
-	cookie := &http.Cookie{
+	cookie = &http.Cookie{
 		Name:     "ClientID",
 		Value:    JWTString,
 		Path:     "/",
@@ -84,7 +84,7 @@ func createCookieClientID() *http.Cookie {
 		MaxAge:   3600,
 	}
 
-	return cookie
+	return generatedUserID, cookie
 }
 
 func validateUserID(userID int) bool {
@@ -104,13 +104,15 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 
 			// проверить наличие cookie
 			reseivedCookie, err := r.Cookie("ClientID")
-			// fmt.Println(err)
+			fmt.Println(err)
 			if err != nil {
 				switch {
 				case errors.Is(err, http.ErrNoCookie):
-					createdCookie := createCookieClientID()
+					userID, createdCookie := createCookieClientID()
 					http.SetCookie(w, createdCookie)
-					w.WriteHeader(http.StatusUnauthorized)
+					userIDString := strconv.Itoa(userID)
+					r.Header.Set("ClientID", userIDString)
+					h.ServeHTTP(w, r)
 				default:
 					log.Println(err)
 					http.Error(w, "server error", http.StatusInternalServerError)
@@ -121,7 +123,10 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 			clientID := reseivedCookie.Value
 			// fmt.Println(clientID)
 			if clientID == "" {
-				createdCookie := createCookieClientID()
+				fmt.Println("clientID == ")
+			}
+			if clientID == "" {
+				_, createdCookie := createCookieClientID()
 				http.SetCookie(w, createdCookie)
 				w.WriteHeader(http.StatusUnauthorized)
 				return
@@ -140,9 +145,9 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 				r.Header.Set("ClientID", userIDString)
 				h.ServeHTTP(w, r)
 			} else {
-				createdCookie := createCookieClientID()
+				_, createdCookie := createCookieClientID()
 				http.SetCookie(w, createdCookie)
-				w.WriteHeader(http.StatusUnauthorized)
+				h.ServeHTTP(w, r)
 			}
 		}
 		return http.HandlerFunc(fn)
