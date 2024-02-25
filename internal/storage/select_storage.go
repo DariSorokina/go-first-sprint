@@ -23,6 +23,6 @@ func SetStorage(flagConfig *config.FlagConfig) (storage Database) {
 		storage = NewPostgresqlDB(flagConfig.FlagPostgresqlDSN)
 		return
 	}
-	// storage = NewStorage(flagConfig.FlagFileStoragePath)
+	storage = NewStorage(flagConfig.FlagFileStoragePath)
 	return
 }

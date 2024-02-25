@@ -3,6 +3,8 @@ package storage
 import (
 	"log"
 	"sync"
+
+	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 )
 
 type Storage struct {
@@ -45,7 +47,7 @@ func NewStorage(fileName string) *Storage {
 	}
 }
 
-func (storage *Storage) SetValue(shortURL, longURL string) {
+func (storage *Storage) SetValue(shortURL, longURL string, userID int) {
 	storage.mutex.Lock()
 	defer storage.mutex.Unlock()
 
@@ -86,6 +88,10 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 		return
 	}
 	return ""
+}
+
+func (storage *Storage) GetURLsByUserID(userID int) (urls []models.URLPair) {
+	return
 }
 
 func (storage *Storage) Ping() error {
