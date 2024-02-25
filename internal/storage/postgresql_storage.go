@@ -3,9 +3,11 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"time"
 
+	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -13,11 +15,13 @@ const (
 	createSchemaQuery = `CREATE SCHEMA IF NOT EXISTS content;`
 	createTableQuery  = `CREATE TABLE IF NOT EXISTS content.urls (
 		originalURL TEXT, 
-		shortURL TEXT);`
-	createIndexQuery     = `CREATE INDEX IF NOT EXISTS originalURL ON content.urls (originalURL)`
-	readShortURLQuery    = `SELECT shortURL FROM content.urls WHERE originalURL = $1;`
-	readOriginalURLQuery = `SELECT originalURL FROM content.urls WHERE shortURL = $1;`
-	writeURLsQuery       = `INSERT INTO content.urls (originalURL, shortURL) VALUES ($1, $2);`
+		shortURL TEXT,
+		userID INTEGER);`
+	createIndexQuery      = `CREATE INDEX IF NOT EXISTS originalURL ON content.urls (originalURL)`
+	readShortURLQuery     = `SELECT shortURL FROM content.urls WHERE originalURL = $1;`
+	readOriginalURLQuery  = `SELECT originalURL FROM content.urls WHERE shortURL = $1;`
+	readURLsByUserIDQuery = `SELECT originalURL, shortURL FROM content.urls WHERE userID = $1;`
+	writeURLsQuery        = `INSERT INTO content.urls (originalURL, shortURL, userID) VALUES ($1, $2, $3);`
 )
 
 type PostgresqlDB struct {
@@ -49,11 +53,11 @@ func NewPostgresqlDB(cofigBDString string) *PostgresqlDB {
 	return &PostgresqlDB{db: db}
 }
 
-func (postgresqlDB *PostgresqlDB) SetValue(shortURL, longURL string) {
+func (postgresqlDB *PostgresqlDB) SetValue(shortURL, longURL string, userID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_, err := postgresqlDB.db.ExecContext(ctx, writeURLsQuery, longURL, shortURL)
+	_, err := postgresqlDB.db.ExecContext(ctx, writeURLsQuery, longURL, shortURL, userID)
 	if err != nil {
 		log.Println(err)
 	}
@@ -80,6 +84,29 @@ func (postgresqlDB *PostgresqlDB) GetOriginal(shortURL string) (longURL string) 
 	if err != nil {
 		return ""
 	}
+
+	return
+}
+
+func (postgresqlDB *PostgresqlDB) GetURLsByUserID(userID int) (urls []models.URLPair) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	rows, err := postgresqlDB.db.QueryContext(ctx, readURLsByUserIDQuery, userID)
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var url models.URLPair
+		if err := rows.Scan(&url.OriginalURL, &url.ShortenURL); err != nil {
+			log.Fatal(err)
+		}
+		urls = append(urls, url)
+	}
+
+	fmt.Println(urls)
 
 	return
 }

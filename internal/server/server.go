@@ -6,6 +6,7 @@ import (
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
+	"github.com/DariSorokina/go-first-sprint.git/internal/cookie"
 	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 	"github.com/DariSorokina/go-first-sprint.git/internal/middleware"
 	"github.com/go-chi/chi/v5"
@@ -32,6 +33,10 @@ func (server *Server) newRouter() chi.Router {
 	router.Post("/api/shorten", server.handlers.shortenerHandlerJSON)
 	router.Post("/api/shorten/batch", server.handlers.shortenerBatchHandler)
 	router.Get("/{id}", server.handlers.originalHandler)
+	router.Route("/api/user/urls", func(r chi.Router) {
+		r.Use(cookie.CookieMiddleware())
+		r.Get("/", server.handlers.urlsByIDHandler)
+	})
 	return router
 }
 

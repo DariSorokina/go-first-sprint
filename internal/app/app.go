@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"fmt"
 
+	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
 )
 
@@ -15,19 +16,24 @@ func NewApp(storage storage.Database) *App {
 	return &App{storage: storage}
 }
 
-func (app *App) ToShortenURL(longURL string) (shortURL string, err error) {
+func (app *App) ToShortenURL(longURL string, UserID int) (shortURL string, err error) {
 	shortURL, err = app.storage.GetShort(longURL)
 	if err != nil {
 		return
 	}
 	shortURL = encodeString(longURL)
-	app.storage.SetValue(shortURL, longURL)
+	app.storage.SetValue(shortURL, longURL, UserID)
 	return
 }
 
 func (app *App) ToOriginalURL(shortURL string) (longURL string) {
 	longURL = app.storage.GetOriginal(shortURL)
 	return
+}
+
+func (app *App) GetURLsByUserID(UserID int) (urls []models.URLPair) {
+	urls = app.storage.GetURLsByUserID(UserID)
+	return urls
 }
 
 func (app *App) Ping() error {
