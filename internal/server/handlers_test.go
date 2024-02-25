@@ -77,8 +77,8 @@ func TestRouter(t *testing.T) {
 			requestBody: bytes.NewBuffer([]byte("https://practicum.yandex.ru/")),
 			requestPath: "",
 			expectedData: expectedData{
-				expectedContentType: "text/plain; charset=utf-8",
-				expectedStatusCode:  http.StatusUnauthorized,
+				expectedContentType: "text/plain",
+				expectedStatusCode:  http.StatusConflict,
 				expectedBody:        "http://localhost:8080/d41d8cd98f",
 				expectedLocation:    "",
 			},
