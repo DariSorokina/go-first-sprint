@@ -112,6 +112,7 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 					http.SetCookie(w, createdCookie)
 					userIDString := strconv.Itoa(userID)
 					r.Header.Set("ClientID", userIDString)
+					w.WriteHeader(http.StatusUnauthorized)
 					h.ServeHTTP(w, r)
 				default:
 					log.Println(err)
