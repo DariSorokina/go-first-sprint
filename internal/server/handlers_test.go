@@ -47,8 +47,10 @@ func TestRouter(t *testing.T) {
 		log.Fatal("Failed to create logger:", err)
 	}
 
-	storage := storage.NewStorage(flagConfig.FlagFileStoragePath)
-	defer storage.CloseFile()
+	storage := storage.SetStorage(flagConfig)
+	if flagConfig.FlagFileStoragePath != "" || flagConfig.FlagPostgresqlDSN != "" {
+		defer storage.Close()
+	}
 
 	app := app.NewApp(storage)
 	serv := NewServer(app, flagConfig, l)
@@ -76,7 +78,7 @@ func TestRouter(t *testing.T) {
 			requestPath: "",
 			expectedData: expectedData{
 				expectedContentType: "text/plain",
-				expectedStatusCode:  http.StatusCreated,
+				expectedStatusCode:  http.StatusConflict,
 				expectedBody:        "http://localhost:8080/d41d8cd98f",
 				expectedLocation:    "",
 			},
@@ -100,7 +102,7 @@ func TestRouter(t *testing.T) {
 			requestPath: "/api/shorten",
 			expectedData: expectedData{
 				expectedContentType: "application/json",
-				expectedStatusCode:  http.StatusCreated,
+				expectedStatusCode:  http.StatusConflict,
 				expectedBody:        "{\"result\":\"http://localhost:8080/d41d8cd98f\"}",
 				expectedLocation:    "",
 			},

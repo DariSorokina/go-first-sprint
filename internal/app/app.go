@@ -8,25 +8,31 @@ import (
 )
 
 type App struct {
-	storage *storage.Storage
+	storage storage.Database
 }
 
-func NewApp(storage *storage.Storage) *App {
+func NewApp(storage storage.Database) *App {
 	return &App{storage: storage}
 }
 
-func (app *App) ToShortenURL(longURL string) (shortURL string) {
-	shortURL = app.storage.GetShort(longURL)
-	if shortURL == "" {
-		shortURL = encodeString(longURL)
-		app.storage.SetValue(shortURL, longURL)
+func (app *App) ToShortenURL(longURL string) (shortURL string, err error) {
+	shortURL, err = app.storage.GetShort(longURL)
+	if err != nil {
+		return
 	}
+	shortURL = encodeString(longURL)
+	app.storage.SetValue(shortURL, longURL)
 	return
 }
 
 func (app *App) ToOriginalURL(shortURL string) (longURL string) {
 	longURL = app.storage.GetOriginal(shortURL)
 	return
+}
+
+func (app *App) Ping() error {
+	err := app.storage.Ping()
+	return err
 }
 
 func encodeString(data string) string {

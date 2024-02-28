@@ -24,7 +24,7 @@ func NewStorage(fileName string) *Storage {
 
 		readURLs, err := fileStorage.consumer.readURLs()
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 		obtainedUrls := append(url, readURLs...)
 
@@ -59,22 +59,22 @@ func (storage *Storage) SetValue(shortURL, longURL string) {
 	if storage.fileStorage.fileName != "" {
 		err := storage.fileStorage.producer.writeURL(url[0])
 		if err != nil {
-			log.Fatal(err)
+			log.Println(err)
 		}
 	}
 
 	storage.originalToShort, storage.shortToOriginal = addURLsToMap(url, storage.originalToShort, storage.shortToOriginal)
 }
 
-func (storage *Storage) GetShort(longURL string) (shortURL string) {
+func (storage *Storage) GetShort(longURL string) (shortURL string, err error) {
 	storage.mutex.RLock()
 	defer storage.mutex.RUnlock()
 
 	if value, ok := storage.originalToShort[longURL]; ok {
 		shortURL = value
-		return shortURL
+		return shortURL, ErrShortURLAlreadyExist
 	}
-	return ""
+	return "", nil
 }
 
 func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
@@ -88,7 +88,15 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 	return ""
 }
 
-func (storage *Storage) CloseFile() {
-	storage.fileStorage.producer.close()
-	storage.fileStorage.consumer.close()
+func (storage *Storage) Ping() error {
+	return nil
+}
+
+func (storage *Storage) Close() {
+	if storage.fileStorage.producer != nil {
+		storage.fileStorage.producer.close()
+	}
+	if storage.fileStorage.consumer != nil {
+		storage.fileStorage.consumer.close()
+	}
 }

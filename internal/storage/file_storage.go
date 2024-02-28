@@ -15,12 +15,12 @@ type fileStorage struct {
 func newFileStorage(fileName string) *fileStorage {
 	producer, err := newProducer(fileName)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	consumer, err := newConsumer(fileName)
 	if err != nil {
-		log.Fatal(err)
+		log.Println(err)
 	}
 
 	return &fileStorage{

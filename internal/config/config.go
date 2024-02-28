@@ -10,6 +10,7 @@ type FlagConfig struct {
 	FlagBaseURL         string
 	FlagLogLevel        string
 	FlagFileStoragePath string
+	FlagPostgresqlDSN   string
 }
 
 func NewFlagConfig() *FlagConfig {
@@ -22,6 +23,7 @@ func ParseFlags() (flagConfig *FlagConfig) {
 	flag.StringVar(&flagConfig.FlagBaseURL, "b", "http://localhost:8080/", "prefix for trimed URL")
 	flag.StringVar(&flagConfig.FlagLogLevel, "l", "info", "log level")
 	flag.StringVar(&flagConfig.FlagFileStoragePath, "f", "/tmp/short-url-db.json", "file storage path")
+	flag.StringVar(&flagConfig.FlagPostgresqlDSN, "d", "", "postgreSQL DSN")
 	flag.Parse()
 
 	if envRunAddr := os.Getenv("SERVER_ADDRESS"); envRunAddr != "" {
@@ -35,6 +37,9 @@ func ParseFlags() (flagConfig *FlagConfig) {
 	}
 	if envFileStoragePath := os.Getenv("FILE_STORAGE_PATH"); envFileStoragePath != "" {
 		flagConfig.FlagFileStoragePath = envFileStoragePath
+	}
+	if envPostgresqlDSN := os.Getenv("DATABASE_DSN"); envPostgresqlDSN != "" {
+		flagConfig.FlagPostgresqlDSN = envPostgresqlDSN
 	}
 	return
 }

@@ -19,10 +19,8 @@ func main() {
 		log.Fatal("Failed to create logger:", err)
 	}
 
-	storage := storage.NewStorage(flagConfig.FlagFileStoragePath)
-	if flagConfig.FlagFileStoragePath != "" {
-		defer storage.CloseFile()
-	}
+	storage := storage.SetStorage(flagConfig)
+	defer storage.Close()
 
 	app := app.NewApp(storage)
 	serv := server.NewServer(app, flagConfig, l)
