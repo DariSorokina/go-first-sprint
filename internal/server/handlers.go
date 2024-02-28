@@ -49,6 +49,7 @@ func (handlers *handlers) originalHandler(res http.ResponseWriter, req *http.Req
 	idValue := chi.URLParam(req, "id")
 	correspondingURL, getOriginalErr := handlers.app.ToOriginalURL(idValue)
 	if errors.Is(getOriginalErr, storage.ErrDeletedURL) {
+		res.Header().Set("Location", correspondingURL)
 		res.WriteHeader(http.StatusGone)
 	} else {
 		res.Header().Set("Location", correspondingURL)
