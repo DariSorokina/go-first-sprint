@@ -2,6 +2,7 @@ package app
 
 import (
 	"crypto/md5"
+	"errors"
 	"fmt"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/models"
@@ -26,14 +27,30 @@ func (app *App) ToShortenURL(longURL string, UserID int) (shortURL string, err e
 	return
 }
 
-func (app *App) ToOriginalURL(shortURL string) (longURL string) {
-	longURL = app.storage.GetOriginal(shortURL)
+func (app *App) ToOriginalURL(shortURL string) (longURL string, getOriginalErr error) {
+	longURL, getOriginalErr = app.storage.GetOriginal(shortURL)
+	switch {
+	case errors.Is(getOriginalErr, storage.ErrReadOriginalURL):
+		return "", storage.ErrReadOriginalURL
+	case errors.Is(getOriginalErr, storage.ErrDeletedURL):
+		return "", storage.ErrDeletedURL
+	}
 	return
 }
 
-func (app *App) GetURLsByUserID(UserID int) (urls []models.URLPair) {
-	urls = app.storage.GetURLsByUserID(UserID)
+func (app *App) GetURLsByUserID(userID int) (urls []models.URLPair) {
+	urls = app.storage.GetURLsByUserID(userID)
 	return urls
+}
+
+func (app *App) DeleteURLs(deleteURLsChannel <-chan models.URLsClientID) {
+	for urlsClientID := range deleteURLsChannel {
+		fmt.Println(urlsClientID)
+		fmt.Println("-----------")
+		fmt.Println(urlsClientID.URL)
+		fmt.Println(urlsClientID.ClientID)
+		go app.storage.DeleteURLsWorker(urlsClientID.URL, urlsClientID.ClientID)
+	}
 }
 
 func (app *App) Ping() error {

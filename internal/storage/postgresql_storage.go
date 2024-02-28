@@ -3,6 +3,7 @@ package storage
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"log"
 	"time"
 
@@ -15,13 +16,18 @@ const (
 	createTableQuery  = `CREATE TABLE IF NOT EXISTS content.urls (
 		originalURL TEXT, 
 		shortURL TEXT,
-		userID INTEGER);`
+		userID INTEGER,
+		deletedFlag BOOLEAN);`
 	createIndexQuery      = `CREATE INDEX IF NOT EXISTS originalURL ON content.urls (originalURL)`
 	readShortURLQuery     = `SELECT shortURL FROM content.urls WHERE originalURL = $1;`
-	readOriginalURLQuery  = `SELECT originalURL FROM content.urls WHERE shortURL = $1;`
+	readOriginalURLQuery  = `SELECT originalURL, deletedFlag FROM content.urls WHERE shortURL = $1;`
 	readURLsByUserIDQuery = `SELECT originalURL, shortURL FROM content.urls WHERE userID = $1;`
 	writeURLsQuery        = `INSERT INTO content.urls (originalURL, shortURL, userID) VALUES ($1, $2, $3);`
+	updateDeleteFlagQuery = `UPDATE content.urls SET deletedFlag = True WHERE shortURL = ($1) AND userID = ($2);`
 )
+
+var ErrReadOriginalURL = errors.New("can not read url")
+var ErrDeletedURL = errors.New("requested url was deleted")
 
 type PostgresqlDB struct {
 	db *sql.DB
@@ -75,16 +81,22 @@ func (postgresqlDB *PostgresqlDB) GetShort(longURL string) (shortURL string, err
 	return shortURL, ErrShortURLAlreadyExist
 }
 
-func (postgresqlDB *PostgresqlDB) GetOriginal(shortURL string) (longURL string) {
+func (postgresqlDB *PostgresqlDB) GetOriginal(shortURL string) (longURL string, getOriginalErr error) {
+	var deletedFlag bool
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	err := postgresqlDB.db.QueryRowContext(ctx, readOriginalURLQuery, shortURL).Scan(&longURL)
+	err := postgresqlDB.db.QueryRowContext(ctx, readOriginalURLQuery, shortURL).Scan(&longURL, &deletedFlag)
 	if err != nil {
-		return ""
+		return "", ErrReadOriginalURL
 	}
 
-	return
+	if deletedFlag {
+		return "", ErrDeletedURL
+	}
+
+	return longURL, nil
 }
 
 func (postgresqlDB *PostgresqlDB) GetURLsByUserID(userID int) (urls []models.URLPair) {
@@ -129,5 +141,15 @@ func (postgresqlDB *PostgresqlDB) Ping() error {
 func (postgresqlDB *PostgresqlDB) Close() {
 	if postgresqlDB.db != nil {
 		postgresqlDB.db.Close()
+	}
+}
+
+func (postgresqlDB *PostgresqlDB) DeleteURLsWorker(shortURL string, userID int) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	_, err := postgresqlDB.db.ExecContext(ctx, updateDeleteFlagQuery, shortURL, userID)
+	if err != nil {
+		log.Println(err)
 	}
 }

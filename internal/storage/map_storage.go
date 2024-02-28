@@ -79,7 +79,7 @@ func (storage *Storage) GetShort(longURL string) (shortURL string, err error) {
 	return "", nil
 }
 
-func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
+func (storage *Storage) GetOriginal(shortURL string) (longURL string, getOriginalErr error) {
 	storage.mutex.RLock()
 	defer storage.mutex.RUnlock()
 
@@ -87,11 +87,14 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 		longURL = value
 		return
 	}
-	return ""
+	return "", nil
 }
 
 func (storage *Storage) GetURLsByUserID(userID int) (urls []models.URLPair) {
 	return
+}
+
+func (storage *Storage) DeleteURLsWorker(shortURL string, userID int) {
 }
 
 func (storage *Storage) Ping() error {

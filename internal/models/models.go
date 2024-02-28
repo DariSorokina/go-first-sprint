@@ -12,3 +12,8 @@ type URLPair struct {
 	ShortenURL  string `json:"short_url"`
 	OriginalURL string `json:"original_url"`
 }
+
+type URLsClientID struct {
+	URL      string
+	ClientID int
+}

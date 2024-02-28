@@ -12,8 +12,9 @@ var ErrShortURLAlreadyExist = errors.New("corresponding short URL already exists
 type Database interface {
 	SetValue(shortURL, longURL string, userID int)
 	GetShort(longURL string) (shortURL string, err error)
-	GetOriginal(shortURL string) (longURL string)
+	GetOriginal(shortURL string) (longURL string, getOriginalErr error)
 	GetURLsByUserID(userID int) (urls []models.URLPair)
+	DeleteURLsWorker(shortURL string, userID int)
 	Ping() error
 	Close()
 }

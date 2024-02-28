@@ -36,6 +36,7 @@ func (server *Server) newRouter() chi.Router {
 		r.Use(cookie.CookieMiddleware())
 		r.Post("/", server.handlers.shortenerHandler)
 		r.Get("/api/user/urls", server.handlers.urlsByIDHandler)
+		r.Delete("/api/user/urls", server.handlers.deleteURLsHandler)
 	})
 	return router
 }

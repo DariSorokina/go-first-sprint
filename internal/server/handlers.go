@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -46,9 +47,14 @@ func (handlers *handlers) pingPostgresqlHandler(res http.ResponseWriter, req *ht
 
 func (handlers *handlers) originalHandler(res http.ResponseWriter, req *http.Request) {
 	idValue := chi.URLParam(req, "id")
-	correspondingURL := handlers.app.ToOriginalURL(idValue)
-	res.Header().Set("Location", correspondingURL)
-	res.WriteHeader(http.StatusTemporaryRedirect)
+	correspondingURL, getOriginalErr := handlers.app.ToOriginalURL(idValue)
+	if errors.Is(getOriginalErr, storage.ErrDeletedURL) {
+		res.WriteHeader(http.StatusGone)
+	} else {
+		res.Header().Set("Location", correspondingURL)
+		res.WriteHeader(http.StatusTemporaryRedirect)
+	}
+
 }
 
 func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Request) {
@@ -214,4 +220,42 @@ func (handlers *handlers) urlsByIDHandler(res http.ResponseWriter, req *http.Req
 		res.Header().Set("Content-Type", "application/json")
 		res.Write(resp)
 	}
+}
+
+func (handlers *handlers) deleteURLsHandler(res http.ResponseWriter, req *http.Request) {
+	var urls []string
+	deleteURLsChannel := make(chan models.URLsClientID, 1)
+	defer close(deleteURLsChannel)
+
+	requestBody, err := io.ReadAll(req.Body)
+	if err != nil {
+		http.Error(res, "Bad request body", http.StatusBadRequest)
+		return
+	}
+
+	err = json.Unmarshal(requestBody, &urls)
+	if err != nil {
+		log.Println("An error occurred while parsing the data", err)
+	}
+
+	userID := req.Header.Get("ClientID")
+	userIDInt, err := strconv.Atoi(userID)
+	if err != nil {
+		log.Print(err)
+	}
+
+	fmt.Println(urls)
+	go handlers.app.DeleteURLs(deleteURLsChannel)
+
+	for _, url := range urls {
+		var urlsClientID models.URLsClientID
+		urlsClientID.URL = url
+		urlsClientID.ClientID = userIDInt
+		fmt.Println(urlsClientID)
+		deleteURLsChannel <- urlsClientID
+	}
+
+	res.WriteHeader(http.StatusAccepted)
+	res.Write([]byte{})
+
 }
