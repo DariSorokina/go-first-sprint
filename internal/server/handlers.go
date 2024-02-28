@@ -48,8 +48,6 @@ func (handlers *handlers) pingPostgresqlHandler(res http.ResponseWriter, req *ht
 func (handlers *handlers) originalHandler(res http.ResponseWriter, req *http.Request) {
 	idValue := chi.URLParam(req, "id")
 	correspondingURL, getOriginalErr := handlers.app.ToOriginalURL(idValue)
-	fmt.Println("--------------")
-	fmt.Println(correspondingURL)
 	if errors.Is(getOriginalErr, storage.ErrDeletedURL) {
 		res.Header().Set("Location", correspondingURL)
 		res.WriteHeader(http.StatusGone)

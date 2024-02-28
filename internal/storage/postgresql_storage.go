@@ -22,7 +22,7 @@ const (
 	readShortURLQuery     = `SELECT shortURL FROM content.urls WHERE originalURL = $1;`
 	readOriginalURLQuery  = `SELECT originalURL, deletedFlag FROM content.urls WHERE shortURL = $1;`
 	readURLsByUserIDQuery = `SELECT originalURL, shortURL FROM content.urls WHERE userID = $1;`
-	writeURLsQuery        = `INSERT INTO content.urls (originalURL, shortURL, userID) VALUES ($1, $2, $3);`
+	writeURLsQuery        = `INSERT INTO content.urls (originalURL, shortURL, userID, deletedFlag) VALUES ($1, $2, $3, False);`
 	updateDeleteFlagQuery = `UPDATE content.urls SET deletedFlag = True WHERE shortURL = ($1) AND userID = ($2);`
 )
 
@@ -88,6 +88,7 @@ func (postgresqlDB *PostgresqlDB) GetOriginal(shortURL string) (longURL string, 
 	defer cancel()
 
 	err := postgresqlDB.db.QueryRowContext(ctx, readOriginalURLQuery, shortURL).Scan(&longURL, &deletedFlag)
+
 	if err != nil {
 		return "", ErrReadOriginalURL
 	}
