@@ -252,7 +252,6 @@ func (handlers *handlers) deleteURLsHandler(res http.ResponseWriter, req *http.R
 		var urlsClientID models.URLsClientID
 		urlsClientID.URL = url
 		urlsClientID.ClientID = userIDInt
-		fmt.Println(urlsClientID)
 		deleteURLsChannel <- urlsClientID
 	}
 

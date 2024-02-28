@@ -88,8 +88,6 @@ func createCookieClientID() (generatedUserID int, cookie *http.Cookie) {
 }
 
 func validateUserID(userID int) bool {
-	// fmt.Println(userID)
-	// fmt.Println(generatedUsersIDs)
 	for _, id := range generatedUsersIDs {
 		if userID == id {
 			return true
@@ -102,7 +100,6 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 
-			// проверить наличие cookie
 			reseivedCookie, err := r.Cookie("ClientID")
 			fmt.Println(err)
 			if err != nil {
@@ -124,7 +121,6 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 			}
 
 			clientID := reseivedCookie.Value
-			// fmt.Println(clientID)
 			if clientID == "" {
 				fmt.Println("clientID == ")
 			}
@@ -135,11 +131,8 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 				return
 			}
 
-			// валидировать cookie
 			userID := getUserID(clientID)
-			// fmt.Println(userID)
 			validUserID := validateUserID(userID)
-			// fmt.Println(validUserID)
 
 			userIDString := strconv.Itoa(userID)
 			fmt.Println(userIDString)

@@ -38,10 +38,6 @@ func (app *App) GetURLsByUserID(userID int) (urls []models.URLPair) {
 
 func (app *App) DeleteURLs(deleteURLsChannel <-chan models.URLsClientID) {
 	for urlsClientID := range deleteURLsChannel {
-		fmt.Println(urlsClientID)
-		fmt.Println("-----------")
-		fmt.Println(urlsClientID.URL)
-		fmt.Println(urlsClientID.ClientID)
 		go app.storage.DeleteURLsWorker(urlsClientID.URL, urlsClientID.ClientID)
 	}
 }
