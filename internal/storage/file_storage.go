@@ -2,31 +2,34 @@ package storage
 
 import (
 	"encoding/json"
-	"log"
 	"os"
+
+	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 )
 
 type fileStorage struct {
 	producer *producer
 	consumer *consumer
 	fileName string
+	log      *logger.Logger
 }
 
-func newFileStorage(fileName string) *fileStorage {
+func newFileStorage(fileName string, l *logger.Logger) *fileStorage {
 	producer, err := newProducer(fileName)
 	if err != nil {
-		log.Println(err)
+		l.CustomLog.Sugar().Errorf("newProducer failed: %s", err)
 	}
 
 	consumer, err := newConsumer(fileName)
 	if err != nil {
-		log.Println(err)
+		l.CustomLog.Sugar().Errorf("newConsumer failed: %s", err)
 	}
 
 	return &fileStorage{
 		producer: producer,
 		consumer: consumer,
 		fileName: fileName,
+		log:      l,
 	}
 }
 

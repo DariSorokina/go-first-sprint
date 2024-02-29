@@ -4,6 +4,7 @@ import (
 	"log"
 	"sync"
 
+	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 )
 
@@ -12,10 +13,11 @@ type Storage struct {
 	originalToShort map[string]string
 	shortToOriginal map[string]string
 	mutex           sync.RWMutex
+	log             *logger.Logger
 }
 
-func NewStorage(fileName string) *Storage {
-	fileStorage := newFileStorage(fileName)
+func NewStorage(fileName string, l *logger.Logger) *Storage {
+	fileStorage := newFileStorage(fileName, l)
 	if fileName != "" {
 		var url = []*fileLine{
 			{
@@ -38,12 +40,14 @@ func NewStorage(fileName string) *Storage {
 			fileStorage:     fileStorage,
 			originalToShort: originalToShort,
 			shortToOriginal: shortToOriginal,
+			log:             l,
 		}
 	}
 
 	return &Storage{
 		originalToShort: map[string]string{"https://practicum.yandex.ru/": "d41d8cd98f"},
 		shortToOriginal: map[string]string{"d41d8cd98f": "https://practicum.yandex.ru/"},
+		log:             l,
 	}
 }
 

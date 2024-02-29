@@ -3,15 +3,14 @@ package server
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"strconv"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
+	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
 	"github.com/go-chi/chi/v5"
@@ -30,10 +29,11 @@ type shortURL struct {
 type handlers struct {
 	app        *app.App
 	flagConfig *config.FlagConfig
+	log        *logger.Logger
 }
 
-func newHandlers(app *app.App, flagConfig *config.FlagConfig) *handlers {
-	return &handlers{app: app, flagConfig: flagConfig}
+func newHandlers(app *app.App, flagConfig *config.FlagConfig, l *logger.Logger) *handlers {
+	return &handlers{app: app, flagConfig: flagConfig, log: l}
 }
 
 func (handlers *handlers) pingPostgresqlHandler(res http.ResponseWriter, req *http.Request) {
@@ -69,14 +69,14 @@ func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Re
 	userID := req.Header.Get("ClientID")
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
-		log.Print(err)
+		handlers.log.CustomLog.Sugar().Errorf("Failed to parse client ID: %s", err)
 	}
 
 	shortenedURL, errShortURL := handlers.app.ToShortenURL(string(requestBody), userIDInt)
 	response, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
 	if err != nil {
 		http.Error(res, "Bad URL path provided", http.StatusInternalServerError)
-		log.Println("Failed to join provided URL path with short URL", err)
+		handlers.log.CustomLog.Sugar().Errorf("Failed to join provided URL path with short URL: %s", err)
 		return
 	}
 
@@ -109,7 +109,7 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 	userID := req.Header.Get("ClientID")
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
-		log.Print(err)
+		handlers.log.CustomLog.Sugar().Errorf("Failed to parse client ID: %s", err)
 	}
 
 	shortenedURL, errShortURL := handlers.app.ToShortenURL(string(request.OriginalURL), userIDInt)
@@ -117,7 +117,7 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 	response.ShortenURL, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
 	if err != nil {
 		http.Error(res, "Bad URL path provided", http.StatusInternalServerError)
-		log.Println("Failed to join provided URL path with short URL", err)
+		handlers.log.CustomLog.Sugar().Errorf("Failed to join provided URL path with short URL: %s", err)
 		return
 	}
 
@@ -157,7 +157,7 @@ func (handlers *handlers) shortenerBatchHandler(res http.ResponseWriter, req *ht
 	userID := req.Header.Get("ClientID")
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
-		log.Print(err)
+		handlers.log.CustomLog.Sugar().Errorf("Failed to parse client ID: %s", err)
 	}
 
 	for _, inputSample := range input {
@@ -166,7 +166,7 @@ func (handlers *handlers) shortenerBatchHandler(res http.ResponseWriter, req *ht
 		response, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
 		if err != nil {
 			http.Error(res, "Bad URL path provided", http.StatusInternalServerError)
-			log.Println("Failed to join provided URL path with short URL", err)
+			handlers.log.CustomLog.Sugar().Errorf("Failed to join provided URL path with short URL: %s", err)
 			return
 		}
 
@@ -188,7 +188,7 @@ func (handlers *handlers) urlsByIDHandler(res http.ResponseWriter, req *http.Req
 	userID := req.Header.Get("ClientID")
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
-		log.Print(err)
+		handlers.log.CustomLog.Sugar().Errorf("Failed to parse client ID: %s", err)
 	}
 
 	urlPairs := handlers.app.GetURLsByUserID(userIDInt)
@@ -204,7 +204,7 @@ func (handlers *handlers) urlsByIDHandler(res http.ResponseWriter, req *http.Req
 			transformedURL.ShortenURL, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, urlPair.ShortenURL)
 			if err != nil {
 				http.Error(res, "Bad URL path provided", http.StatusInternalServerError)
-				log.Println("Failed to join provided URL path with short URL", err)
+				handlers.log.CustomLog.Sugar().Errorf("Failed to join provided URL path with short URL: %s", err)
 				return
 			}
 			transformedURL.OriginalURL = urlPair.OriginalURL
@@ -236,16 +236,15 @@ func (handlers *handlers) deleteURLsHandler(res http.ResponseWriter, req *http.R
 
 	err = json.Unmarshal(requestBody, &urls)
 	if err != nil {
-		log.Println("An error occurred while parsing the data", err)
+		handlers.log.CustomLog.Sugar().Errorf("An error occurred while parsing the data: %s", err)
 	}
 
 	userID := req.Header.Get("ClientID")
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
-		log.Print(err)
+		handlers.log.CustomLog.Sugar().Errorf("Failed to parse client ID: %s", err)
 	}
 
-	fmt.Println(urls)
 	go handlers.app.DeleteURLs(deleteURLsChannel)
 
 	for _, url := range urls {

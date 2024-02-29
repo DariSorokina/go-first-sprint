@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
+	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 )
 
@@ -19,11 +20,11 @@ type Database interface {
 	Close()
 }
 
-func SetStorage(flagConfig *config.FlagConfig) (storage Database) {
+func SetStorage(flagConfig *config.FlagConfig, l *logger.Logger) (storage Database) {
 	if flagConfig.FlagPostgresqlDSN != "" {
-		storage = NewPostgresqlDB(flagConfig.FlagPostgresqlDSN)
+		storage = NewPostgresqlDB(flagConfig.FlagPostgresqlDSN, l)
 		return
 	}
-	storage = NewStorage(flagConfig.FlagFileStoragePath)
+	storage = NewStorage(flagConfig.FlagFileStoragePath, l)
 	return
 }

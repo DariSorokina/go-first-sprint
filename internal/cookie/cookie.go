@@ -30,7 +30,6 @@ func generateUserID() int {
 func createJWTString() (generatedUserID int, tokenString string, err error) {
 	generatedUserID = generateUserID()
 	generatedUsersIDs = append(generatedUsersIDs, generatedUserID)
-	fmt.Println(generatedUsersIDs)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{

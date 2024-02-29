@@ -1,7 +1,6 @@
 package server
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
@@ -19,9 +18,9 @@ type Server struct {
 	log        *logger.Logger
 }
 
-func NewServer(app *app.App, flagConfig *config.FlagConfig, log *logger.Logger) *Server {
-	handlers := newHandlers(app, flagConfig)
-	return &Server{handlers: handlers, app: app, flagConfig: flagConfig, log: log}
+func NewServer(app *app.App, flagConfig *config.FlagConfig, l *logger.Logger) *Server {
+	handlers := newHandlers(app, flagConfig, l)
+	return &Server{handlers: handlers, app: app, flagConfig: flagConfig, log: l}
 }
 
 func (server *Server) newRouter() chi.Router {
@@ -42,6 +41,6 @@ func (server *Server) newRouter() chi.Router {
 }
 
 func Run(server *Server) error {
-	log.Println("Running server on", server.flagConfig.FlagRunAddr)
+	server.log.CustomLog.Sugar().Infof("Running server on %s", server.flagConfig.FlagRunAddr)
 	return http.ListenAndServe(server.flagConfig.FlagRunAddr, server.newRouter())
 }
