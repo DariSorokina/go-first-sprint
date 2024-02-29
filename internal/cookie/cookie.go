@@ -100,7 +100,6 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 
 			reseivedCookie, err := r.Cookie("ClientID")
-			fmt.Println(err)
 			if err != nil {
 				switch {
 				case errors.Is(err, http.ErrNoCookie):
@@ -120,9 +119,7 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 			}
 
 			clientID := reseivedCookie.Value
-			if clientID == "" {
-				fmt.Println("clientID == ")
-			}
+
 			if clientID == "" {
 				_, createdCookie := createCookieClientID()
 				http.SetCookie(w, createdCookie)
@@ -134,7 +131,6 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 			validUserID := validateUserID(userID)
 
 			userIDString := strconv.Itoa(userID)
-			fmt.Println(userIDString)
 
 			if validUserID {
 				r.Header.Set("ClientID", userIDString)
