@@ -9,8 +9,13 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 	"github.com/golang-jwt/jwt/v4"
 )
+
+type Cookie struct {
+	log *logger.Logger
+}
 
 type Claims struct {
 	jwt.RegisteredClaims

@@ -14,6 +14,6 @@ type URLPair struct {
 }
 
 type URLsClientID struct {
-	URL      string
+	URLs     []string
 	ClientID int
 }

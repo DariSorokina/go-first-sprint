@@ -47,7 +47,11 @@ func TestRouter(t *testing.T) {
 		log.Fatal("Failed to create logger:", err)
 	}
 
-	storage := storage.SetStorage(flagConfig, l)
+	storage, err := storage.SetStorage(flagConfig, l)
+	if err != nil {
+		panic(err)
+	}
+
 	if flagConfig.FlagFileStoragePath != "" || flagConfig.FlagPostgresqlDSN != "" {
 		defer storage.Close()
 	}

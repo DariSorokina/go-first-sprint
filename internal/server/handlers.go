@@ -1,12 +1,14 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"net/http"
 	"net/url"
 	"strconv"
+	"time"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
@@ -37,7 +39,10 @@ func newHandlers(app *app.App, flagConfig *config.FlagConfig, l *logger.Logger) 
 }
 
 func (handlers *handlers) pingPostgresqlHandler(res http.ResponseWriter, req *http.Request) {
-	err := handlers.app.Ping()
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
+	err := handlers.app.Ping(ctx)
 	if err != nil {
 		http.Error(res, "Storage connection failed", http.StatusInternalServerError)
 		return
@@ -46,8 +51,11 @@ func (handlers *handlers) pingPostgresqlHandler(res http.ResponseWriter, req *ht
 }
 
 func (handlers *handlers) originalHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
 	idValue := chi.URLParam(req, "id")
-	correspondingURL, getOriginalErr := handlers.app.ToOriginalURL(idValue)
+	correspondingURL, getOriginalErr := handlers.app.ToOriginalURL(ctx, idValue)
 	if errors.Is(getOriginalErr, storage.ErrDeletedURL) {
 		res.Header().Set("Location", correspondingURL)
 		res.WriteHeader(http.StatusGone)
@@ -59,6 +67,9 @@ func (handlers *handlers) originalHandler(res http.ResponseWriter, req *http.Req
 }
 
 func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
 	var response string
 	requestBody, err := io.ReadAll(req.Body)
 	if err != nil {
@@ -72,7 +83,7 @@ func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Re
 		handlers.log.CustomLog.Sugar().Errorf("Failed to parse client ID: %s", err)
 	}
 
-	shortenedURL, errShortURL := handlers.app.ToShortenURL(string(requestBody), userIDInt)
+	shortenedURL, errShortURL := handlers.app.ToShortenURL(ctx, string(requestBody), userIDInt)
 	response, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
 	if err != nil {
 		http.Error(res, "Bad URL path provided", http.StatusInternalServerError)
@@ -92,6 +103,9 @@ func (handlers *handlers) shortenerHandler(res http.ResponseWriter, req *http.Re
 }
 
 func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
 	var request models.Request
 	var response models.Response
 
@@ -112,7 +126,7 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 		handlers.log.CustomLog.Sugar().Errorf("Failed to parse client ID: %s", err)
 	}
 
-	shortenedURL, errShortURL := handlers.app.ToShortenURL(string(request.OriginalURL), userIDInt)
+	shortenedURL, errShortURL := handlers.app.ToShortenURL(ctx, string(request.OriginalURL), userIDInt)
 
 	response.ShortenURL, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
 	if err != nil {
@@ -139,6 +153,9 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 }
 
 func (handlers *handlers) shortenerBatchHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
 	var input []originalURL
 	var output []shortURL
 	var response string
@@ -161,7 +178,7 @@ func (handlers *handlers) shortenerBatchHandler(res http.ResponseWriter, req *ht
 	}
 
 	for _, inputSample := range input {
-		shortenedURL, _ := handlers.app.ToShortenURL(inputSample.OriginalURL, userIDInt)
+		shortenedURL, _ := handlers.app.ToShortenURL(ctx, inputSample.OriginalURL, userIDInt)
 
 		response, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, shortenedURL)
 		if err != nil {
@@ -185,45 +202,51 @@ func (handlers *handlers) shortenerBatchHandler(res http.ResponseWriter, req *ht
 }
 
 func (handlers *handlers) urlsByIDHandler(res http.ResponseWriter, req *http.Request) {
+	ctx, cancel := context.WithTimeout(req.Context(), 10*time.Second)
+	defer cancel()
+
 	userID := req.Header.Get("ClientID")
 	userIDInt, err := strconv.Atoi(userID)
 	if err != nil {
 		handlers.log.CustomLog.Sugar().Errorf("Failed to parse client ID: %s", err)
+		return
 	}
 
-	urlPairs := handlers.app.GetURLsByUserID(userIDInt)
+	urlPairs := handlers.app.GetURLsByUserID(ctx, userIDInt)
 
 	if len(urlPairs) == 0 {
 		res.WriteHeader(http.StatusNoContent)
+		return
+	}
 
-	} else {
-		var transformedURLPairs []models.URLPair
-		var transformedURL models.URLPair
+	var transformedURLPairs []models.URLPair
+	var transformedURL models.URLPair
 
-		for _, urlPair := range urlPairs {
-			transformedURL.ShortenURL, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, urlPair.ShortenURL)
-			if err != nil {
-				http.Error(res, "Bad URL path provided", http.StatusInternalServerError)
-				handlers.log.CustomLog.Sugar().Errorf("Failed to join provided URL path with short URL: %s", err)
-				return
-			}
-			transformedURL.OriginalURL = urlPair.OriginalURL
-			transformedURLPairs = append(transformedURLPairs, transformedURL)
-
-		}
-
-		resp, err := json.Marshal(transformedURLPairs)
+	for _, urlPair := range urlPairs {
+		transformedURL.ShortenURL, err = url.JoinPath(handlers.flagConfig.FlagBaseURL, urlPair.ShortenURL)
 		if err != nil {
-			http.Error(res, err.Error(), http.StatusInternalServerError)
+			http.Error(res, "Bad URL path provided", http.StatusInternalServerError)
+			handlers.log.CustomLog.Sugar().Errorf("Failed to join provided URL path with short URL: %s", err)
 			return
 		}
+		transformedURL.OriginalURL = urlPair.OriginalURL
+		transformedURLPairs = append(transformedURLPairs, transformedURL)
 
-		res.Header().Set("Content-Type", "application/json")
-		res.Write(resp)
 	}
+
+	resp, err := json.Marshal(transformedURLPairs)
+	if err != nil {
+		http.Error(res, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	res.Header().Set("Content-Type", "application/json")
+	res.Write(resp)
+
 }
 
 func (handlers *handlers) deleteURLsHandler(res http.ResponseWriter, req *http.Request) {
+
 	var urls []string
 	deleteURLsChannel := make(chan models.URLsClientID, 1)
 	defer close(deleteURLsChannel)
@@ -247,12 +270,25 @@ func (handlers *handlers) deleteURLsHandler(res http.ResponseWriter, req *http.R
 
 	go handlers.app.DeleteURLs(deleteURLsChannel)
 
-	for _, url := range urls {
+	batchSize := 2
+	for i := 0; i < len(urls); i += batchSize {
+		end := i + batchSize
+		if end > len(urls) {
+			end = len(urls)
+		}
+
 		var urlsClientID models.URLsClientID
-		urlsClientID.URL = url
+		urlsClientID.URLs = urls[i:end]
 		urlsClientID.ClientID = userIDInt
 		deleteURLsChannel <- urlsClientID
 	}
+
+	// for _, url := range urls {
+	// 	var urlsClientID models.URLsClientID
+	// 	urlsClientID.URL = url
+	// 	urlsClientID.ClientID = userIDInt
+	// 	deleteURLsChannel <- urlsClientID
+	// }
 
 	res.WriteHeader(http.StatusAccepted)
 	res.Write([]byte{})

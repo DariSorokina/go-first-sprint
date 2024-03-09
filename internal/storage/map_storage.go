@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"log"
 	"sync"
 
@@ -51,7 +52,7 @@ func NewStorage(fileName string, l *logger.Logger) *Storage {
 	}
 }
 
-func (storage *Storage) SetValue(shortURL, longURL string, userID int) {
+func (storage *Storage) SetValue(ctx context.Context, shortURL, longURL string, userID int) {
 	storage.mutex.Lock()
 	defer storage.mutex.Unlock()
 
@@ -72,7 +73,7 @@ func (storage *Storage) SetValue(shortURL, longURL string, userID int) {
 	storage.originalToShort, storage.shortToOriginal = addURLsToMap(url, storage.originalToShort, storage.shortToOriginal)
 }
 
-func (storage *Storage) GetShort(longURL string) (shortURL string, err error) {
+func (storage *Storage) GetShort(ctx context.Context, longURL string) (shortURL string, err error) {
 	storage.mutex.RLock()
 	defer storage.mutex.RUnlock()
 
@@ -83,7 +84,7 @@ func (storage *Storage) GetShort(longURL string) (shortURL string, err error) {
 	return "", nil
 }
 
-func (storage *Storage) GetOriginal(shortURL string) (longURL string, getOriginalErr error) {
+func (storage *Storage) GetOriginal(ctx context.Context, shortURL string) (longURL string, getOriginalErr error) {
 	storage.mutex.RLock()
 	defer storage.mutex.RUnlock()
 
@@ -94,14 +95,14 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string, getOrigina
 	return "", nil
 }
 
-func (storage *Storage) GetURLsByUserID(userID int) (urls []models.URLPair) {
+func (storage *Storage) GetURLsByUserID(ctx context.Context, userID int) (urls []models.URLPair) {
 	return
 }
 
-func (storage *Storage) DeleteURLsWorker(shortURL string, userID int) {
+func (storage *Storage) DeleteURLsWorker(shortURLs []string, userID int) {
 }
 
-func (storage *Storage) Ping() error {
+func (storage *Storage) Ping(ctx context.Context) error {
 	return nil
 }
 

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
@@ -11,20 +12,20 @@ import (
 var ErrShortURLAlreadyExist = errors.New("corresponding short URL already exists")
 
 type Database interface {
-	SetValue(shortURL, longURL string, userID int)
-	GetShort(longURL string) (shortURL string, err error)
-	GetOriginal(shortURL string) (longURL string, getOriginalErr error)
-	GetURLsByUserID(userID int) (urls []models.URLPair)
-	DeleteURLsWorker(shortURL string, userID int)
-	Ping() error
+	SetValue(ctx context.Context, shortURL, longURL string, userID int)
+	GetShort(ctx context.Context, longURL string) (shortURL string, err error)
+	GetOriginal(ctx context.Context, shortURL string) (longURL string, err error)
+	GetURLsByUserID(ctx context.Context, userID int) (urls []models.URLPair)
+	DeleteURLsWorker(shortURLs []string, userID int)
+	Ping(ctx context.Context) error
 	Close()
 }
 
-func SetStorage(flagConfig *config.FlagConfig, l *logger.Logger) (storage Database) {
+func SetStorage(flagConfig *config.FlagConfig, l *logger.Logger) (Database, error) {
 	if flagConfig.FlagPostgresqlDSN != "" {
-		storage = NewPostgresqlDB(flagConfig.FlagPostgresqlDSN, l)
-		return
+		storage, err := NewPostgresqlDB(flagConfig.FlagPostgresqlDSN, l)
+		return storage, err
 	}
-	storage = NewStorage(flagConfig.FlagFileStoragePath, l)
-	return
+	storage := NewStorage(flagConfig.FlagFileStoragePath, l)
+	return storage, nil
 }

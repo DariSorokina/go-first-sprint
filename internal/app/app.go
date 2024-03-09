@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"crypto/md5"
 	"fmt"
 
@@ -18,34 +19,34 @@ func NewApp(storage storage.Database, l *logger.Logger) *App {
 	return &App{storage: storage, log: l}
 }
 
-func (app *App) ToShortenURL(longURL string, UserID int) (shortURL string, err error) {
-	shortURL, err = app.storage.GetShort(longURL)
+func (app *App) ToShortenURL(ctx context.Context, longURL string, userID int) (shortURL string, err error) {
+	shortURL, err = app.storage.GetShort(ctx, longURL)
 	if err != nil {
 		return
 	}
 	shortURL = encodeString(longURL)
-	app.storage.SetValue(shortURL, longURL, UserID)
+	app.storage.SetValue(ctx, shortURL, longURL, userID)
 	return
 }
 
-func (app *App) ToOriginalURL(shortURL string) (longURL string, getOriginalErr error) {
-	longURL, getOriginalErr = app.storage.GetOriginal(shortURL)
+func (app *App) ToOriginalURL(ctx context.Context, shortURL string) (longURL string, err error) {
+	longURL, err = app.storage.GetOriginal(ctx, shortURL)
 	return
 }
 
-func (app *App) GetURLsByUserID(userID int) (urls []models.URLPair) {
-	urls = app.storage.GetURLsByUserID(userID)
+func (app *App) GetURLsByUserID(ctx context.Context, userID int) (urls []models.URLPair) {
+	urls = app.storage.GetURLsByUserID(ctx, userID)
 	return
 }
 
 func (app *App) DeleteURLs(deleteURLsChannel <-chan models.URLsClientID) {
 	for urlsClientID := range deleteURLsChannel {
-		go app.storage.DeleteURLsWorker(urlsClientID.URL, urlsClientID.ClientID)
+		go app.storage.DeleteURLsWorker(urlsClientID.URLs, urlsClientID.ClientID)
 	}
 }
 
-func (app *App) Ping() (err error) {
-	err = app.storage.Ping()
+func (app *App) Ping(ctx context.Context) (err error) {
+	err = app.storage.Ping(ctx)
 	return
 }
 

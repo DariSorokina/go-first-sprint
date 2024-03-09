@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"log"
+	"strings"
 	"time"
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
@@ -13,18 +14,19 @@ import (
 )
 
 const (
-	createSchemaQuery = `CREATE SCHEMA IF NOT EXISTS content;`
-	createTableQuery  = `CREATE TABLE IF NOT EXISTS content.urls (
+	createSchemaTableIndexQuery = `CREATE SCHEMA IF NOT EXISTS content;
+	CREATE TABLE IF NOT EXISTS content.urls (
 		originalURL TEXT, 
 		shortURL TEXT,
 		userID INTEGER,
-		deletedFlag BOOLEAN);`
-	createIndexQuery      = `CREATE INDEX IF NOT EXISTS originalURL ON content.urls (originalURL)`
-	readShortURLQuery     = `SELECT shortURL FROM content.urls WHERE originalURL = $1;`
-	readOriginalURLQuery  = `SELECT originalURL, deletedFlag FROM content.urls WHERE shortURL = $1;`
-	readURLsByUserIDQuery = `SELECT originalURL, shortURL FROM content.urls WHERE userID = $1;`
-	writeURLsQuery        = `INSERT INTO content.urls (originalURL, shortURL, userID, deletedFlag) VALUES ($1, $2, $3, False);`
-	updateDeleteFlagQuery = `UPDATE content.urls SET deletedFlag = True WHERE shortURL = ($1) AND userID = ($2);`
+		deletedFlag BOOLEAN);
+	CREATE INDEX IF NOT EXISTS originalURL ON content.urls (originalURL);`
+	readShortURLQuery              = `SELECT shortURL FROM content.urls WHERE originalURL = $1;`
+	readOriginalURLQuery           = `SELECT originalURL, deletedFlag FROM content.urls WHERE shortURL = $1;`
+	readURLsByUserIDQuery          = `SELECT originalURL, shortURL FROM content.urls WHERE userID = $1;`
+	writeURLsQuery                 = `INSERT INTO content.urls (originalURL, shortURL, userID, deletedFlag) VALUES ($1, $2, $3, False);`
+	updateDeleteFlagQueryBeginning = `UPDATE content.urls SET deletedFlag = True WHERE shortURL in ('`
+	updateDeleteFlagQueryEndinning = `') AND userID = ($1);`
 )
 
 var ErrReadOriginalURL = errors.New("can not read url")
@@ -35,35 +37,26 @@ type PostgresqlDB struct {
 	log *logger.Logger
 }
 
-func NewPostgresqlDB(cofigBDString string, l *logger.Logger) *PostgresqlDB {
+func NewPostgresqlDB(cofigBDString string, l *logger.Logger) (*PostgresqlDB, error) {
 	db, err := sql.Open("pgx", cofigBDString)
 	if err != nil {
 		l.CustomLog.Sugar().Errorf("Failed to open a database: %s", err)
+		return &PostgresqlDB{db: db, log: l}, err
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_, err = db.ExecContext(ctx, createSchemaQuery)
+	_, err = db.ExecContext(ctx, createSchemaTableIndexQuery)
 	if err != nil {
 		l.CustomLog.Sugar().Errorf("Failed to execute a query createSchemaQuery: %s", err)
-	}
-	_, err = db.ExecContext(ctx, createTableQuery)
-	if err != nil {
-		l.CustomLog.Sugar().Errorf("Failed to execute a query createTableQuery: %s", err)
-	}
-	_, err = db.ExecContext(ctx, createIndexQuery)
-	if err != nil {
-		l.CustomLog.Sugar().Errorf("Failed to execute a query createIndexQuery: %s", err)
+		return &PostgresqlDB{db: db, log: l}, err
 	}
 
-	return &PostgresqlDB{db: db, log: l}
+	return &PostgresqlDB{db: db, log: l}, nil
 }
 
-func (postgresqlDB *PostgresqlDB) SetValue(shortURL, longURL string, userID int) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (postgresqlDB *PostgresqlDB) SetValue(ctx context.Context, shortURL, longURL string, userID int) {
 	_, err := postgresqlDB.db.ExecContext(ctx, writeURLsQuery, longURL, shortURL, userID)
 	if err != nil {
 		postgresqlDB.log.CustomLog.Sugar().Errorf("Failed to execute a query writeURLsQuery: %s", err)
@@ -71,10 +64,7 @@ func (postgresqlDB *PostgresqlDB) SetValue(shortURL, longURL string, userID int)
 
 }
 
-func (postgresqlDB *PostgresqlDB) GetShort(longURL string) (shortURL string, errShortURL error) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
+func (postgresqlDB *PostgresqlDB) GetShort(ctx context.Context, longURL string) (shortURL string, errShortURL error) {
 	err := postgresqlDB.db.QueryRowContext(ctx, readShortURLQuery, longURL).Scan(&shortURL)
 	if err != nil {
 		return "", nil
@@ -83,14 +73,10 @@ func (postgresqlDB *PostgresqlDB) GetShort(longURL string) (shortURL string, err
 	return shortURL, ErrShortURLAlreadyExist
 }
 
-func (postgresqlDB *PostgresqlDB) GetOriginal(shortURL string) (longURL string, getOriginalErr error) {
+func (postgresqlDB *PostgresqlDB) GetOriginal(ctx context.Context, shortURL string) (longURL string, getOriginalErr error) {
 	var deletedFlag bool
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	err := postgresqlDB.db.QueryRowContext(ctx, readOriginalURLQuery, shortURL).Scan(&longURL, &deletedFlag)
-
 	if err != nil {
 		return "", ErrReadOriginalURL
 	}
@@ -102,9 +88,7 @@ func (postgresqlDB *PostgresqlDB) GetOriginal(shortURL string) (longURL string, 
 	return longURL, nil
 }
 
-func (postgresqlDB *PostgresqlDB) GetURLsByUserID(userID int) (urls []models.URLPair) {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func (postgresqlDB *PostgresqlDB) GetURLsByUserID(ctx context.Context, userID int) (urls []models.URLPair) {
 
 	rows, err := postgresqlDB.db.QueryContext(ctx, readURLsByUserIDQuery, userID)
 	if err != nil {
@@ -133,9 +117,7 @@ func (postgresqlDB *PostgresqlDB) GetURLsByUserID(userID int) (urls []models.URL
 	return
 }
 
-func (postgresqlDB *PostgresqlDB) Ping() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
+func (postgresqlDB *PostgresqlDB) Ping(ctx context.Context) error {
 	if err := postgresqlDB.db.PingContext(ctx); err != nil {
 		return err
 	}
@@ -148,12 +130,22 @@ func (postgresqlDB *PostgresqlDB) Close() {
 	}
 }
 
-func (postgresqlDB *PostgresqlDB) DeleteURLsWorker(shortURL string, userID int) {
+func (postgresqlDB *PostgresqlDB) DeleteURLsWorker(shortURLs []string, userID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	_, err := postgresqlDB.db.ExecContext(ctx, updateDeleteFlagQuery, shortURL, userID)
+	processedShortURLs := strings.Join(shortURLs, "', '")
+	updateDeleteFlagQuery := updateDeleteFlagQueryBeginning + processedShortURLs + updateDeleteFlagQueryEndinning
+
+	result, err := postgresqlDB.db.ExecContext(ctx, updateDeleteFlagQuery, userID)
 	if err != nil {
 		postgresqlDB.log.CustomLog.Sugar().Errorf("Failed to execute a query updateDeleteFlagQuery: %s", err)
+	}
+	rows, err := result.RowsAffected()
+	if err != nil {
+		postgresqlDB.log.CustomLog.Sugar().Errorf("Failed to execute RowsAffected: %s", err)
+	}
+	if rows != 1 {
+		postgresqlDB.log.CustomLog.Sugar().Infof("Affected rows: %d", rows)
 	}
 }
