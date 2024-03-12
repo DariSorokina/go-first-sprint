@@ -17,12 +17,12 @@ type fileStorage struct {
 func newFileStorage(fileName string, l *logger.Logger) *fileStorage {
 	producer, err := newProducer(fileName)
 	if err != nil {
-		l.CustomLog.Sugar().Errorf("newProducer failed: %s", err)
+		l.Sugar().Errorf("newProducer failed: %s", err)
 	}
 
 	consumer, err := newConsumer(fileName)
 	if err != nil {
-		l.CustomLog.Sugar().Errorf("newConsumer failed: %s", err)
+		l.Sugar().Errorf("newConsumer failed: %s", err)
 	}
 
 	return &fileStorage{

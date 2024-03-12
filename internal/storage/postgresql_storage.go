@@ -40,7 +40,7 @@ type PostgresqlDB struct {
 func NewPostgresqlDB(cofigBDString string, l *logger.Logger) (*PostgresqlDB, error) {
 	db, err := sql.Open("pgx", cofigBDString)
 	if err != nil {
-		l.CustomLog.Sugar().Errorf("Failed to open a database: %s", err)
+		l.Sugar().Errorf("Failed to open a database: %s", err)
 		return &PostgresqlDB{db: db, log: l}, err
 	}
 
@@ -49,7 +49,7 @@ func NewPostgresqlDB(cofigBDString string, l *logger.Logger) (*PostgresqlDB, err
 
 	_, err = db.ExecContext(ctx, createSchemaTableIndexQuery)
 	if err != nil {
-		l.CustomLog.Sugar().Errorf("Failed to execute a query createSchemaQuery: %s", err)
+		l.Sugar().Errorf("Failed to execute a query createSchemaQuery: %s", err)
 		return &PostgresqlDB{db: db, log: l}, err
 	}
 
@@ -59,7 +59,7 @@ func NewPostgresqlDB(cofigBDString string, l *logger.Logger) (*PostgresqlDB, err
 func (postgresqlDB *PostgresqlDB) SetValue(ctx context.Context, shortURL, longURL string, userID int) {
 	_, err := postgresqlDB.db.ExecContext(ctx, writeURLsQuery, longURL, shortURL, userID)
 	if err != nil {
-		postgresqlDB.log.CustomLog.Sugar().Errorf("Failed to execute a query writeURLsQuery: %s", err)
+		postgresqlDB.log.Sugar().Errorf("Failed to execute a query writeURLsQuery: %s", err)
 	}
 
 }
@@ -99,18 +99,18 @@ func (postgresqlDB *PostgresqlDB) GetURLsByUserID(ctx context.Context, userID in
 	for rows.Next() {
 		var url models.URLPair
 		if err := rows.Scan(&url.OriginalURL, &url.ShortenURL); err != nil {
-			postgresqlDB.log.CustomLog.Sugar().Errorf("Failed to scan original and shorten urls in GetURLsByUserID method: %s", err)
+			postgresqlDB.log.Sugar().Errorf("Failed to scan original and shorten urls in GetURLsByUserID method: %s", err)
 		}
 		urls = append(urls, url)
 	}
 
 	rerr := rows.Close()
 	if rerr != nil {
-		postgresqlDB.log.CustomLog.Sugar().Errorf("Close error in GetURLsByUserID method: %s", rerr)
+		postgresqlDB.log.Sugar().Errorf("Close error in GetURLsByUserID method: %s", rerr)
 	}
 
 	if err := rows.Err(); err != nil {
-		postgresqlDB.log.CustomLog.Sugar().Errorf("The last error encountered by Rows.Scan in GetURLsByUserID method: %s", err)
+		postgresqlDB.log.Sugar().Errorf("The last error encountered by Rows.Scan in GetURLsByUserID method: %s", err)
 		log.Fatal(err)
 	}
 
@@ -139,13 +139,13 @@ func (postgresqlDB *PostgresqlDB) DeleteURLsWorker(shortURLs []string, userID in
 
 	result, err := postgresqlDB.db.ExecContext(ctx, updateDeleteFlagQuery, userID)
 	if err != nil {
-		postgresqlDB.log.CustomLog.Sugar().Errorf("Failed to execute a query updateDeleteFlagQuery: %s", err)
+		postgresqlDB.log.Sugar().Errorf("Failed to execute a query updateDeleteFlagQuery: %s", err)
 	}
 	rows, err := result.RowsAffected()
 	if err != nil {
-		postgresqlDB.log.CustomLog.Sugar().Errorf("Failed to execute RowsAffected: %s", err)
+		postgresqlDB.log.Sugar().Errorf("Failed to execute RowsAffected: %s", err)
 	}
 	if rows != 1 {
-		postgresqlDB.log.CustomLog.Sugar().Infof("Affected rows: %d", rows)
+		postgresqlDB.log.Sugar().Infof("Affected rows: %d", rows)
 	}
 }

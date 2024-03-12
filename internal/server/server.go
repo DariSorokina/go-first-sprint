@@ -41,6 +41,6 @@ func (server *Server) newRouter() chi.Router {
 }
 
 func Run(server *Server) error {
-	server.log.CustomLog.Sugar().Infof("Running server on %s", server.flagConfig.FlagRunAddr)
+	server.log.Sugar().Infof("Running server on %s", server.flagConfig.FlagRunAddr)
 	return http.ListenAndServe(server.flagConfig.FlagRunAddr, server.newRouter())
 }
