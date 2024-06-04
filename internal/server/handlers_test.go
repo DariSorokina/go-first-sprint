@@ -198,7 +198,7 @@ func TestRouter(t *testing.T) {
 	}
 }
 
-func getTestServer() (flagConfig *config.FlagConfig, storage_file storage.Database, serv *Server) {
+func getTestServer() (flagConfig *config.FlagConfig, storageFile storage.Database, serv *Server) {
 	flagConfig = &config.FlagConfig{
 		FlagRunAddr:         ":8080",
 		FlagBaseURL:         "http://localhost:8080/",
@@ -211,15 +211,15 @@ func getTestServer() (flagConfig *config.FlagConfig, storage_file storage.Databa
 		log.Fatal("Failed to create logger:", err)
 	}
 
-	storage_file, err = storage.SetStorage(flagConfig, l)
+	storageFile, err = storage.SetStorage(flagConfig, l)
 	if err != nil {
 		panic(err)
 	}
 
-	app := app.NewApp(storage_file, l)
+	app := app.NewApp(storageFile, l)
 	serv = NewServer(app, flagConfig, l)
 
-	return flagConfig, storage_file, serv
+	return flagConfig, storageFile, serv
 }
 
 func BenchmarkHandlers(b *testing.B) {
@@ -242,7 +242,7 @@ func BenchmarkHandlers(b *testing.B) {
 			OriginalURL:   "https://practicum.yandex.ru/",
 		},
 	}
-	batchJsonData, err := json.Marshal(batchData)
+	batchJSONData, err := json.Marshal(batchData)
 	if err != nil {
 		fmt.Println("Error marshalling JSON:", err)
 		return
@@ -295,7 +295,7 @@ func BenchmarkHandlers(b *testing.B) {
 			b.StopTimer()
 			httpMethod := http.MethodPost
 			requestPath := "/api/shorten/batch"
-			requestBody := bytes.NewBuffer([]byte(batchJsonData))
+			requestBody := bytes.NewBuffer([]byte(batchJSONData))
 			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
 			responseRecorder := httptest.NewRecorder()
 			httpRequest.Header.Set("ClientID", "1")
