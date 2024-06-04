@@ -86,7 +86,7 @@ func TestRouter(t *testing.T) {
 			OriginalURL:   "https://practicum.yandex.ru/",
 		},
 	}
-	batchJsonData, err := json.Marshal(batchData)
+	batchJSONData, err := json.Marshal(batchData)
 	if err != nil {
 		fmt.Println("Error marshalling JSON:", err)
 		return
@@ -150,7 +150,7 @@ func TestRouter(t *testing.T) {
 			name:        "handler: shortenerBatchHandler, test: StatusCreated",
 			method:      http.MethodPost,
 			clientID:    1,
-			requestBody: bytes.NewBuffer([]byte(batchJsonData)),
+			requestBody: bytes.NewBuffer([]byte(batchJSONData)),
 			requestPath: "/api/shorten/batch",
 			expectedData: expectedData{
 				expectedContentType: "application/json",
