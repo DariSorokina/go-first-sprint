@@ -52,7 +52,7 @@ func TestRouter(t *testing.T) {
 		FlagRunAddr:         ":8080",
 		FlagBaseURL:         "http://localhost:8080/",
 		FlagLogLevel:        "info",
-		FlagFileStoragePath: "short-url-db.json",
+		FlagFileStoragePath: "/storage/short-url-db.json",
 		FlagPostgresqlDSN:   "host=localhost user=app password=123qwe dbname=urls_database sslmode=disable"}
 
 	// flagConfig := config.ParseFlags()
@@ -203,7 +203,7 @@ func getTestServer() (flagConfig *config.FlagConfig, storageFile storage.Databas
 		FlagRunAddr:         ":8080",
 		FlagBaseURL:         "http://localhost:8080/",
 		FlagLogLevel:        "info",
-		FlagFileStoragePath: "/Users/dariasorokina/Desktop/yp_golang/go-first-sprint/internal/storage/short-url-db.json"}
+		FlagFileStoragePath: "/storage/short-url-db.json"}
 
 	var l *logger.Logger
 	var err error
