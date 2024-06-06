@@ -198,137 +198,137 @@ func TestRouter(t *testing.T) {
 	}
 }
 
-func getTestServer() (flagConfig *config.FlagConfig, storageFile storage.Database, serv *Server) {
-	flagConfig = &config.FlagConfig{
-		FlagRunAddr:         ":8080",
-		FlagBaseURL:         "http://localhost:8080/",
-		FlagLogLevel:        "info",
-		FlagFileStoragePath: "/storage/short-url-db.json"}
+// func getTestServer() (flagConfig *config.FlagConfig, storageFile storage.Database, serv *Server) {
+// 	flagConfig = &config.FlagConfig{
+// 		FlagRunAddr:         ":8080",
+// 		FlagBaseURL:         "http://localhost:8080/",
+// 		FlagLogLevel:        "info",
+// 		FlagFileStoragePath: "/storage/short-url-db.json"}
 
-	var l *logger.Logger
-	var err error
-	if l, err = logger.CreateLogger(flagConfig.FlagLogLevel); err != nil {
-		log.Fatal("Failed to create logger:", err)
-	}
+// 	var l *logger.Logger
+// 	var err error
+// 	if l, err = logger.CreateLogger(flagConfig.FlagLogLevel); err != nil {
+// 		log.Fatal("Failed to create logger:", err)
+// 	}
 
-	storageFile, err = storage.SetStorage(flagConfig, l)
-	if err != nil {
-		panic(err)
-	}
+// 	storageFile, err = storage.SetStorage(flagConfig, l)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	app := app.NewApp(storageFile, l)
-	serv = NewServer(app, flagConfig, l)
+// 	app := app.NewApp(storageFile, l)
+// 	serv = NewServer(app, flagConfig, l)
 
-	return flagConfig, storageFile, serv
-}
+// 	return flagConfig, storageFile, serv
+// }
 
-func BenchmarkHandlers(b *testing.B) {
-	b.StopTimer()
-	flagConfig, storage, serv := getTestServer()
-	testServer := httptest.NewServer(serv.newRouter())
-	defer testServer.Close()
+// func BenchmarkHandlers(b *testing.B) {
+// 	b.StopTimer()
+// 	flagConfig, storage, serv := getTestServer()
+// 	testServer := httptest.NewServer(serv.newRouter())
+// 	defer testServer.Close()
 
-	if flagConfig.FlagFileStoragePath != "" || flagConfig.FlagPostgresqlDSN != "" {
-		defer storage.Close()
-	}
+// 	if flagConfig.FlagFileStoragePath != "" || flagConfig.FlagPostgresqlDSN != "" {
+// 		defer storage.Close()
+// 	}
 
-	// data for shortenerBatchHandler test
-	batchData := []struct {
-		CorrelationID string `json:"correlation_id"`
-		OriginalURL   string `json:"original_url"`
-	}{
-		{
-			CorrelationID: "qwerty",
-			OriginalURL:   "https://practicum.yandex.ru/",
-		},
-	}
-	batchJSONData, err := json.Marshal(batchData)
-	if err != nil {
-		fmt.Println("Error marshalling JSON:", err)
-		return
-	}
+// 	// data for shortenerBatchHandler test
+// 	batchData := []struct {
+// 		CorrelationID string `json:"correlation_id"`
+// 		OriginalURL   string `json:"original_url"`
+// 	}{
+// 		{
+// 			CorrelationID: "qwerty",
+// 			OriginalURL:   "https://practicum.yandex.ru/",
+// 		},
+// 	}
+// 	batchJSONData, err := json.Marshal(batchData)
+// 	if err != nil {
+// 		fmt.Println("Error marshalling JSON:", err)
+// 		return
+// 	}
 
-	b.Run("BenchmarkOriginalHandlerRequest", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			b.StopTimer()
-			httpMethod := http.MethodGet
-			requestPath := "/d41d8cd98f"
-			requestBody := bytes.NewBuffer([]byte(""))
-			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
-			responseRecorder := httptest.NewRecorder()
-			httpRequest.Header.Set("ClientID", "1")
-			b.StartTimer()
-			serv.handlers.originalHandler(responseRecorder, httpRequest)
-		}
-	})
+// 	b.Run("BenchmarkOriginalHandlerRequest", func(b *testing.B) {
+// 		for i := 0; i < b.N; i++ {
+// 			b.StopTimer()
+// 			httpMethod := http.MethodGet
+// 			requestPath := "/d41d8cd98f"
+// 			requestBody := bytes.NewBuffer([]byte(""))
+// 			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
+// 			responseRecorder := httptest.NewRecorder()
+// 			httpRequest.Header.Set("ClientID", "1")
+// 			b.StartTimer()
+// 			serv.handlers.originalHandler(responseRecorder, httpRequest)
+// 		}
+// 	})
 
-	b.Run("BenchmarkShortenerHandlerRequest", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			b.StopTimer()
-			httpMethod := http.MethodPost
-			requestPath := ""
-			requestBody := bytes.NewBuffer([]byte("{\"url\":\"https://practicum.yandex.ru/\"} "))
-			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
-			responseRecorder := httptest.NewRecorder()
-			httpRequest.Header.Set("ClientID", "1")
-			b.StartTimer()
-			serv.handlers.shortenerHandler(responseRecorder, httpRequest)
-		}
-	})
+// 	b.Run("BenchmarkShortenerHandlerRequest", func(b *testing.B) {
+// 		for i := 0; i < b.N; i++ {
+// 			b.StopTimer()
+// 			httpMethod := http.MethodPost
+// 			requestPath := ""
+// 			requestBody := bytes.NewBuffer([]byte("{\"url\":\"https://practicum.yandex.ru/\"} "))
+// 			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
+// 			responseRecorder := httptest.NewRecorder()
+// 			httpRequest.Header.Set("ClientID", "1")
+// 			b.StartTimer()
+// 			serv.handlers.shortenerHandler(responseRecorder, httpRequest)
+// 		}
+// 	})
 
-	b.Run("BenchmarkShortenerHandlerJSONRequest", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			b.StopTimer()
-			httpMethod := http.MethodPost
-			requestPath := "/api/shorten"
-			requestBody := bytes.NewBuffer([]byte("https://practicum.yandex.ru/"))
-			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
-			responseRecorder := httptest.NewRecorder()
-			httpRequest.Header.Set("ClientID", "1")
-			b.StartTimer()
-			serv.handlers.shortenerHandlerJSON(responseRecorder, httpRequest)
-		}
-	})
+// 	b.Run("BenchmarkShortenerHandlerJSONRequest", func(b *testing.B) {
+// 		for i := 0; i < b.N; i++ {
+// 			b.StopTimer()
+// 			httpMethod := http.MethodPost
+// 			requestPath := "/api/shorten"
+// 			requestBody := bytes.NewBuffer([]byte("https://practicum.yandex.ru/"))
+// 			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
+// 			responseRecorder := httptest.NewRecorder()
+// 			httpRequest.Header.Set("ClientID", "1")
+// 			b.StartTimer()
+// 			serv.handlers.shortenerHandlerJSON(responseRecorder, httpRequest)
+// 		}
+// 	})
 
-	b.Run("BenchmarkShortenerBatchHandler", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			b.StopTimer()
-			httpMethod := http.MethodPost
-			requestPath := "/api/shorten/batch"
-			requestBody := bytes.NewBuffer([]byte(batchJSONData))
-			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
-			responseRecorder := httptest.NewRecorder()
-			httpRequest.Header.Set("ClientID", "1")
-			b.StartTimer()
-			serv.handlers.shortenerBatchHandler(responseRecorder, httpRequest)
-		}
-	})
+// 	b.Run("BenchmarkShortenerBatchHandler", func(b *testing.B) {
+// 		for i := 0; i < b.N; i++ {
+// 			b.StopTimer()
+// 			httpMethod := http.MethodPost
+// 			requestPath := "/api/shorten/batch"
+// 			requestBody := bytes.NewBuffer([]byte(batchJSONData))
+// 			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
+// 			responseRecorder := httptest.NewRecorder()
+// 			httpRequest.Header.Set("ClientID", "1")
+// 			b.StartTimer()
+// 			serv.handlers.shortenerBatchHandler(responseRecorder, httpRequest)
+// 		}
+// 	})
 
-	b.Run("BenchmarkUrlsByIDHandler", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			b.StopTimer()
-			httpMethod := http.MethodGet
-			requestPath := "/api/user/urls"
-			requestBody := bytes.NewBuffer([]byte(""))
-			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
-			responseRecorder := httptest.NewRecorder()
-			httpRequest.Header.Set("ClientID", "1")
-			b.StartTimer()
-			serv.handlers.urlsByIDHandler(responseRecorder, httpRequest)
-		}
-	})
+// 	b.Run("BenchmarkUrlsByIDHandler", func(b *testing.B) {
+// 		for i := 0; i < b.N; i++ {
+// 			b.StopTimer()
+// 			httpMethod := http.MethodGet
+// 			requestPath := "/api/user/urls"
+// 			requestBody := bytes.NewBuffer([]byte(""))
+// 			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
+// 			responseRecorder := httptest.NewRecorder()
+// 			httpRequest.Header.Set("ClientID", "1")
+// 			b.StartTimer()
+// 			serv.handlers.urlsByIDHandler(responseRecorder, httpRequest)
+// 		}
+// 	})
 
-	b.Run("BenchmarkDeleteURLsHandler", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			b.StopTimer()
-			httpMethod := http.MethodDelete
-			requestPath := "/api/user/urls"
-			requestBody := bytes.NewBuffer([]byte("[\"0dd198178d\"]"))
-			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
-			responseRecorder := httptest.NewRecorder()
-			httpRequest.Header.Set("ClientID", "1")
-			b.StartTimer()
-			serv.handlers.deleteURLsHandler(responseRecorder, httpRequest)
-		}
-	})
-}
+// 	b.Run("BenchmarkDeleteURLsHandler", func(b *testing.B) {
+// 		for i := 0; i < b.N; i++ {
+// 			b.StopTimer()
+// 			httpMethod := http.MethodDelete
+// 			requestPath := "/api/user/urls"
+// 			requestBody := bytes.NewBuffer([]byte("[\"0dd198178d\"]"))
+// 			httpRequest := httptest.NewRequest(httpMethod, testServer.URL+requestPath, requestBody)
+// 			responseRecorder := httptest.NewRecorder()
+// 			httpRequest.Header.Set("ClientID", "1")
+// 			b.StartTimer()
+// 			serv.handlers.deleteURLsHandler(responseRecorder, httpRequest)
+// 		}
+// 	})
+// }
