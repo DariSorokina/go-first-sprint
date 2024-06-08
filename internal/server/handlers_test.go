@@ -10,13 +10,14 @@ import (
 
 	"github.com/DariSorokina/go-first-sprint.git/internal/app"
 	"github.com/DariSorokina/go-first-sprint.git/internal/config"
+	"github.com/DariSorokina/go-first-sprint.git/internal/cookie"
 	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func testRequest(t *testing.T, ts *httptest.Server, method, path string, requestBody io.Reader) (*http.Response, string) {
+func testRequest(t *testing.T, ts *httptest.Server, method, path string, clientID int, requestBody io.Reader) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, requestBody)
 	require.NoError(t, err)
 
@@ -27,6 +28,11 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, request
 		CheckRedirect: func(req *http.Request, via []*http.Request) error {
 			return http.ErrUseLastResponse
 		},
+	}
+
+	if clientID != 0 {
+		clientIDcookie := cookie.CreateCookieClientID(clientID)
+		req.AddCookie(clientIDcookie)
 	}
 
 	result, err := client.Do(req)
@@ -71,6 +77,7 @@ func TestRouter(t *testing.T) {
 	testCases := []struct {
 		name         string
 		method       string
+		clientID     int
 		requestBody  io.Reader
 		requestPath  string
 		expectedData expectedData
@@ -78,6 +85,7 @@ func TestRouter(t *testing.T) {
 		{
 			name:        "handler: ShortenerHandler, test: StatusCreated",
 			method:      http.MethodPost,
+			clientID:    1,
 			requestBody: bytes.NewBuffer([]byte("https://practicum.yandex.ru/")),
 			requestPath: "",
 			expectedData: expectedData{
@@ -90,6 +98,7 @@ func TestRouter(t *testing.T) {
 		{
 			name:        "handler: OriginalHandler, test: StatusTemporaryRedirect",
 			method:      http.MethodGet,
+			clientID:    1,
 			requestBody: nil,
 			requestPath: "/d41d8cd98f",
 			expectedData: expectedData{
@@ -102,6 +111,7 @@ func TestRouter(t *testing.T) {
 		{
 			name:        "handler: shortenerHandlerJSON, test: StatusCreated",
 			method:      http.MethodPost,
+			clientID:    1,
 			requestBody: bytes.NewBuffer([]byte("{\"url\":\"https://practicum.yandex.ru/\"} ")),
 			requestPath: "/api/shorten",
 			expectedData: expectedData{
@@ -114,7 +124,7 @@ func TestRouter(t *testing.T) {
 	}
 	for _, test := range testCases {
 		t.Run(test.name, func(t *testing.T) {
-			result, resultBody := testRequest(t, testServer, test.method, test.requestPath, test.requestBody)
+			result, resultBody := testRequest(t, testServer, test.method, test.requestPath, test.clientID, test.requestBody)
 			defer result.Body.Close()
 			assert.Equal(t, test.expectedData.expectedStatusCode, result.StatusCode)
 			assert.Equal(t, test.expectedData.expectedLocation, result.Header.Get("Location"))

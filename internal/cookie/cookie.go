@@ -4,18 +4,16 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"strconv"
 	"time"
 
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 	"github.com/golang-jwt/jwt/v4"
 )
 
-type Cookie struct {
-	log *logger.Logger
-}
+var (
+	ErrInvalidToken = errors.New("invalid token")
+)
 
 type Claims struct {
 	jwt.RegisteredClaims
@@ -25,35 +23,23 @@ type Claims struct {
 const TOKENEXP = time.Hour * 3
 const SECRETKEY = "supersecretkey"
 
-var generatedUsersIDs = []int{1}
-
-func generateUserID() int {
-	randomNumber := rand.Intn(1000001)
-	return randomNumber
-}
-
-func createJWTString() (generatedUserID int, tokenString string, err error) {
-	generatedUserID = generateUserID()
-	generatedUsersIDs = append(generatedUsersIDs, generatedUserID)
-
+func createJWTString(userID int) (tokenString string, err error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(TOKENEXP)),
 		},
-		UserID: generatedUserID,
+		UserID: userID,
 	})
 
 	tokenString, err = token.SignedString([]byte(SECRETKEY))
 	if err != nil {
-		return generatedUserID, "", err
+		return "", err
 	}
-
-	return generatedUserID, tokenString, nil
+	return tokenString, nil
 }
 
-func getUserID(tokenString string) int {
+func getUserID(tokenString string) (int, error) {
 	claims := &Claims{}
-
 	token, err := jwt.ParseWithClaims(tokenString, claims,
 		func(t *jwt.Token) (interface{}, error) {
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
@@ -63,88 +49,88 @@ func getUserID(tokenString string) int {
 		})
 
 	if err != nil {
-		return -1
+		return 0, err
 	}
 
 	if !token.Valid {
-		fmt.Println("Token is not valid")
-		return -1
+		return 0, ErrInvalidToken
 	}
 
-	fmt.Println("Token is valid")
-	return claims.UserID
+	return claims.UserID, nil
 }
 
-func createCookieClientID() (generatedUserID int, cookie *http.Cookie) {
-	generatedUserID, JWTString, err := createJWTString()
+func CreateCookieClientID(userID int) *http.Cookie {
+	jwtString, err := createJWTString(userID)
 	if err != nil {
 		log.Println(err)
 	}
-	cookie = &http.Cookie{
+	cookie := &http.Cookie{
 		Name:     "ClientID",
-		Value:    JWTString,
+		Value:    jwtString,
 		Path:     "/",
 		HttpOnly: true,
 		MaxAge:   3600,
 	}
-
-	return generatedUserID, cookie
+	return cookie
 }
 
-func validateUserID(userID int) bool {
-	for _, id := range generatedUsersIDs {
-		if userID == id {
-			return true
-		}
-	}
-	return false
-}
-
-func CookieMiddleware() func(h http.Handler) http.Handler {
+func SetCookieMiddleware() func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
+			_, err := r.Cookie("ClientID")
+			if err != nil {
+				h.ServeHTTP(w, r)
+				userID := w.Header().Get("ClientID")
+				w.Header().Del("ClientID")
+				userIDint, err := strconv.Atoi(userID)
+				if err != nil {
+					log.Println(err)
+				}
+				createdCookie := CreateCookieClientID(userIDint)
+				http.SetCookie(w, createdCookie)
+				w.WriteHeader(http.StatusOK)
+			} else {
+				h.ServeHTTP(w, r)
+			}
+		}
+		return http.HandlerFunc(fn)
+	}
+}
 
+func CheckCookieMiddleware() func(h http.Handler) http.Handler {
+	return func(h http.Handler) http.Handler {
+		fn := func(w http.ResponseWriter, r *http.Request) {
 			reseivedCookie, err := r.Cookie("ClientID")
 			if err != nil {
 				switch {
 				case errors.Is(err, http.ErrNoCookie):
-					userID, createdCookie := createCookieClientID()
-					http.SetCookie(w, createdCookie)
-					userIDString := strconv.Itoa(userID)
-					r.Header.Set("ClientID", userIDString)
-					if r.Method == http.MethodGet {
-						w.WriteHeader(http.StatusUnauthorized)
-					}
-					h.ServeHTTP(w, r)
+					w.WriteHeader(http.StatusUnauthorized)
 				default:
-					log.Println(err)
-					http.Error(w, "server error", http.StatusInternalServerError)
+					http.Error(w, err.Error(), http.StatusInternalServerError)
 				}
 				return
 			}
 
-			clientID := reseivedCookie.Value
+			tokenString := reseivedCookie.Value
 
-			if clientID == "" {
-				_, createdCookie := createCookieClientID()
-				http.SetCookie(w, createdCookie)
+			if tokenString == "" {
 				w.WriteHeader(http.StatusUnauthorized)
 				return
 			}
 
-			userID := getUserID(clientID)
-			validUserID := validateUserID(userID)
-
-			userIDString := strconv.Itoa(userID)
-
-			if validUserID {
-				r.Header.Set("ClientID", userIDString)
-				h.ServeHTTP(w, r)
-			} else {
-				_, createdCookie := createCookieClientID()
-				http.SetCookie(w, createdCookie)
-				h.ServeHTTP(w, r)
+			userID, err := getUserID(tokenString)
+			if err != nil {
+				switch {
+				case errors.Is(err, ErrInvalidToken):
+					w.WriteHeader(http.StatusUnauthorized)
+				default:
+					http.Error(w, err.Error(), http.StatusInternalServerError)
+				}
 			}
+			userIDstring := strconv.Itoa(userID)
+			r.Header.Set("ClientID", userIDstring)
+			h.ServeHTTP(w, r)
+
 		}
 		return http.HandlerFunc(fn)
 	}
