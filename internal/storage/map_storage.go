@@ -1,8 +1,12 @@
 package storage
 
 import (
+	"context"
 	"log"
 	"sync"
+
+	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
+	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 )
 
 type Storage struct {
@@ -10,10 +14,11 @@ type Storage struct {
 	originalToShort map[string]string
 	shortToOriginal map[string]string
 	mutex           sync.RWMutex
+	log             *logger.Logger
 }
 
-func NewStorage(fileName string) *Storage {
-	fileStorage := newFileStorage(fileName)
+func NewStorage(fileName string, l *logger.Logger) *Storage {
+	fileStorage := newFileStorage(fileName, l)
 	if fileName != "" {
 		var url = []*fileLine{
 			{
@@ -36,16 +41,18 @@ func NewStorage(fileName string) *Storage {
 			fileStorage:     fileStorage,
 			originalToShort: originalToShort,
 			shortToOriginal: shortToOriginal,
+			log:             l,
 		}
 	}
 
 	return &Storage{
 		originalToShort: map[string]string{"https://practicum.yandex.ru/": "d41d8cd98f"},
 		shortToOriginal: map[string]string{"d41d8cd98f": "https://practicum.yandex.ru/"},
+		log:             l,
 	}
 }
 
-func (storage *Storage) SetValue(shortURL, longURL string) {
+func (storage *Storage) SetValue(ctx context.Context, shortURL, longURL string, userID int) {
 	storage.mutex.Lock()
 	defer storage.mutex.Unlock()
 
@@ -66,7 +73,7 @@ func (storage *Storage) SetValue(shortURL, longURL string) {
 	storage.originalToShort, storage.shortToOriginal = addURLsToMap(url, storage.originalToShort, storage.shortToOriginal)
 }
 
-func (storage *Storage) GetShort(longURL string) (shortURL string, err error) {
+func (storage *Storage) GetShort(ctx context.Context, longURL string) (shortURL string, err error) {
 	storage.mutex.RLock()
 	defer storage.mutex.RUnlock()
 
@@ -77,7 +84,7 @@ func (storage *Storage) GetShort(longURL string) (shortURL string, err error) {
 	return "", nil
 }
 
-func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
+func (storage *Storage) GetOriginal(ctx context.Context, shortURL string) (longURL string, getOriginalErr error) {
 	storage.mutex.RLock()
 	defer storage.mutex.RUnlock()
 
@@ -85,10 +92,17 @@ func (storage *Storage) GetOriginal(shortURL string) (longURL string) {
 		longURL = value
 		return
 	}
-	return ""
+	return "", nil
 }
 
-func (storage *Storage) Ping() error {
+func (storage *Storage) GetURLsByUserID(ctx context.Context, userID int) (urls []models.URLPair) {
+	return
+}
+
+func (storage *Storage) DeleteURLsWorker(shortURLs []string, userID int) {
+}
+
+func (storage *Storage) Ping(ctx context.Context) error {
 	return nil
 }
 
