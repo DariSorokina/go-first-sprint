@@ -1,36 +1,32 @@
-// Package storage provides primitives for connecting to data storages.
 package storage
 
 import (
 	"encoding/json"
+	"log"
 	"os"
-
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 )
 
 type fileStorage struct {
 	producer *producer
 	consumer *consumer
 	fileName string
-	log      *logger.Logger
 }
 
-func newFileStorage(fileName string, l *logger.Logger) *fileStorage {
+func newFileStorage(fileName string) *fileStorage {
 	producer, err := newProducer(fileName)
 	if err != nil {
-		l.Sugar().Errorf("newProducer failed: %s", err)
+		log.Println(err)
 	}
 
 	consumer, err := newConsumer(fileName)
 	if err != nil {
-		l.Sugar().Errorf("newConsumer failed: %s", err)
+		log.Println(err)
 	}
 
 	return &fileStorage{
 		producer: producer,
 		consumer: consumer,
 		fileName: fileName,
-		log:      l,
 	}
 }
 

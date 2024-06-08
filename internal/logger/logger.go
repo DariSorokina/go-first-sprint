@@ -1,4 +1,3 @@
-// Package logger provides a structured logger implementation using Zap for logging HTTP requests and responses.
 package logger
 
 import (
@@ -10,9 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
-// Logger is a structure that encapsulates a Zap logger instance.
 type Logger struct {
-	*zap.Logger
+	customLog *zap.Logger
 }
 
 func newLogger() *Logger {
@@ -20,13 +18,12 @@ func newLogger() *Logger {
 	if err != nil {
 		log.Println(err)
 	}
-	return &Logger{Logger: customLog}
+	return &Logger{customLog: customLog}
 }
 
-// CreateLogger creates a new Logger instance with a custom log level configuration.
 func CreateLogger(level string) (customLog *Logger, err error) {
 	log := newLogger()
-	defer log.Sync()
+	defer log.customLog.Sync()
 
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
@@ -41,18 +38,17 @@ func CreateLogger(level string) (customLog *Logger, err error) {
 		return log, err
 	}
 
-	log.Logger = zl
+	log.customLog = zl
 	return log, nil
 }
 
-// WithLogging is a middleware function that logs HTTP request and response information.
 func (log *Logger) WithLogging() func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 			t1 := time.Now()
 			defer func() {
-				log.Info("served",
+				log.customLog.Info("served",
 					zap.String("method", r.Method),
 					zap.String("uri", r.URL.Path),
 					zap.Int("status", ww.Status()),

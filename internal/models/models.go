@@ -7,13 +7,3 @@ type Request struct {
 type Response struct {
 	ShortenURL string `json:"result"`
 }
-
-type URLPair struct {
-	ShortenURL  string `json:"short_url"`
-	OriginalURL string `json:"original_url"`
-}
-
-type URLsClientID struct {
-	URLs     []string
-	ClientID int
-}

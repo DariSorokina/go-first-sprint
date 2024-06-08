@@ -19,13 +19,10 @@ func main() {
 		log.Fatal("Failed to create logger:", err)
 	}
 
-	storage, err := storage.SetStorage(flagConfig, l)
-	if err != nil {
-		panic(err)
-	}
+	storage := storage.SetStorage(flagConfig)
 	defer storage.Close()
 
-	app := app.NewApp(storage, l)
+	app := app.NewApp(storage)
 	serv := server.NewServer(app, flagConfig, l)
 
 	if err := server.Run(serv); err != nil {
