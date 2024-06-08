@@ -16,7 +16,6 @@ import (
 	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
 	"github.com/go-chi/chi/v5"
-	"github.com/mailru/easyjson"
 )
 
 type originalURL struct {
@@ -116,7 +115,7 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 		return
 	}
 
-	if err = easyjson.Unmarshal(requestBody, &request); err != nil {
+	if err = json.Unmarshal(requestBody, &request); err != nil {
 		http.Error(res, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -136,7 +135,7 @@ func (handlers *handlers) shortenerHandlerJSON(res http.ResponseWriter, req *htt
 		return
 	}
 
-	resp, err := easyjson.Marshal(response)
+	resp, err := json.Marshal(response)
 	if err != nil {
 		http.Error(res, err.Error(), http.StatusInternalServerError)
 		return
