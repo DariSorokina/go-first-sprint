@@ -28,12 +28,11 @@ func NewServer(app *app.App, flagConfig *config.FlagConfig, l *logger.Logger) *S
 func (server *Server) newRouter() chi.Router {
 	router := chi.NewRouter()
 	router.Use(server.log.WithLogging())
-	router.Use(cookie.SetCookieMiddleware())
 	router.Use(middleware.CompressorMiddleware())
 	router.Get("/ping", server.handlers.pingPostgresqlHandler)
 	router.Get("/{id}", server.handlers.originalHandler)
 	router.Route("/", func(r chi.Router) {
-		r.Use(cookie.CheckCookieMiddleware())
+		r.Use(cookie.CookieMiddleware())
 		r.Post("/", server.handlers.shortenerHandler)
 		r.Post("/api/shorten", server.handlers.shortenerHandlerJSON)
 		r.Post("/api/shorten/batch", server.handlers.shortenerBatchHandler)
