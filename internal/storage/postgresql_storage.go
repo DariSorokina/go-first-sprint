@@ -1,4 +1,3 @@
-// Package storage provides primitives for connecting to data storages.
 package storage
 
 import (
@@ -9,10 +8,9 @@ import (
 	"strings"
 	"time"
 
-	_ "github.com/jackc/pgx/v5/stdlib"
-
 	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 	"github.com/DariSorokina/go-first-sprint.git/internal/models"
+	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
 const (
@@ -31,19 +29,14 @@ const (
 	updateDeleteFlagQueryEndinning = `') AND userID = ($1);`
 )
 
-// ErrReadOriginalURL indicates that the provided URL can not be read.
 var ErrReadOriginalURL = errors.New("can not read url")
-
-// ErrDeletedURL indicates that requested url was deleted.
 var ErrDeletedURL = errors.New("requested url was deleted")
 
-// PostgresqlDB represents a structure for working with a PostgreSQL database.
 type PostgresqlDB struct {
-	db  *sql.DB        // Connection to the database.
-	log *logger.Logger // Logger for recording events and errors.
+	db  *sql.DB
+	log *logger.Logger
 }
 
-// NewPostgresqlDB creates a new PostgresqlDB instance, initializes the database connection and create database schema, tables and indexes.
 func NewPostgresqlDB(cofigBDString string, l *logger.Logger) (*PostgresqlDB, error) {
 	db, err := sql.Open("pgx", cofigBDString)
 	if err != nil {
@@ -63,7 +56,6 @@ func NewPostgresqlDB(cofigBDString string, l *logger.Logger) (*PostgresqlDB, err
 	return &PostgresqlDB{db: db, log: l}, nil
 }
 
-// SetValue sets a value in the database for a given shortURL, longURL, and userID.
 func (postgresqlDB *PostgresqlDB) SetValue(ctx context.Context, shortURL, longURL string, userID int) {
 	_, err := postgresqlDB.db.ExecContext(ctx, writeURLsQuery, longURL, shortURL, userID)
 	if err != nil {
@@ -72,7 +64,6 @@ func (postgresqlDB *PostgresqlDB) SetValue(ctx context.Context, shortURL, longUR
 
 }
 
-// GetShort retrieves the short URL corresponding to a given long URL from the database.
 func (postgresqlDB *PostgresqlDB) GetShort(ctx context.Context, longURL string) (shortURL string, errShortURL error) {
 	err := postgresqlDB.db.QueryRowContext(ctx, readShortURLQuery, longURL).Scan(&shortURL)
 	if err != nil {
@@ -82,7 +73,6 @@ func (postgresqlDB *PostgresqlDB) GetShort(ctx context.Context, longURL string) 
 	return shortURL, ErrShortURLAlreadyExist
 }
 
-// GetOriginal retrieves the original long URL corresponding to a given short URL from the database.
 func (postgresqlDB *PostgresqlDB) GetOriginal(ctx context.Context, shortURL string) (longURL string, getOriginalErr error) {
 	var deletedFlag bool
 
@@ -98,7 +88,6 @@ func (postgresqlDB *PostgresqlDB) GetOriginal(ctx context.Context, shortURL stri
 	return longURL, nil
 }
 
-// GetURLsByUserID retrieves URLs associated with a given user ID from the database.
 func (postgresqlDB *PostgresqlDB) GetURLsByUserID(ctx context.Context, userID int) (urls []models.URLPair) {
 
 	rows, err := postgresqlDB.db.QueryContext(ctx, readURLsByUserIDQuery, userID)
@@ -128,7 +117,6 @@ func (postgresqlDB *PostgresqlDB) GetURLsByUserID(ctx context.Context, userID in
 	return
 }
 
-// Ping checks the connection to the database.
 func (postgresqlDB *PostgresqlDB) Ping(ctx context.Context) error {
 	if err := postgresqlDB.db.PingContext(ctx); err != nil {
 		return err
@@ -136,14 +124,12 @@ func (postgresqlDB *PostgresqlDB) Ping(ctx context.Context) error {
 	return nil
 }
 
-// Close closes the database connection if it's not already closed.
 func (postgresqlDB *PostgresqlDB) Close() {
 	if postgresqlDB.db != nil {
 		postgresqlDB.db.Close()
 	}
 }
 
-// DeleteURLsWorker updates the delete flag for a set of short URLs associated with a user ID.
 func (postgresqlDB *PostgresqlDB) DeleteURLsWorker(shortURLs []string, userID int) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
@@ -158,6 +144,8 @@ func (postgresqlDB *PostgresqlDB) DeleteURLsWorker(shortURLs []string, userID in
 	rows, err := result.RowsAffected()
 	if err != nil {
 		postgresqlDB.log.Sugar().Errorf("Failed to execute RowsAffected: %s", err)
+	}
+	if rows != 1 {
 		postgresqlDB.log.Sugar().Infof("Affected rows: %d", rows)
 	}
 }

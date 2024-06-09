@@ -11,7 +11,6 @@ import (
 	"github.com/go-chi/chi/v5"
 )
 
-// Server represents a server component that handles HTTP requests and responses.
 type Server struct {
 	handlers   *handlers
 	app        *app.App
@@ -19,7 +18,6 @@ type Server struct {
 	log        *logger.Logger
 }
 
-// NewServer creates a new Server instance with the provided application, configuration flags, and logger.
 func NewServer(app *app.App, flagConfig *config.FlagConfig, l *logger.Logger) *Server {
 	handlers := newHandlers(app, flagConfig, l)
 	return &Server{handlers: handlers, app: app, flagConfig: flagConfig, log: l}
@@ -42,7 +40,6 @@ func (server *Server) newRouter() chi.Router {
 	return router
 }
 
-// Run starts the server and listens for incoming HTTP requests on the specified address.
 func Run(server *Server) error {
 	server.log.Sugar().Infof("Running server on %s", server.flagConfig.FlagRunAddr)
 	return http.ListenAndServe(server.flagConfig.FlagRunAddr, server.newRouter())
