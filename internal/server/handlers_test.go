@@ -46,7 +46,13 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, clientI
 }
 
 func TestRouter(t *testing.T) {
-	flagConfig := config.ParseFlags()
+	flagConfig := &config.FlagConfig{
+		FlagRunAddr:         ":8080",
+		FlagBaseURL:         "http://localhost:8080/",
+		FlagLogLevel:        "info",
+		FlagFileStoragePath: "/storage/short-url-db.json",
+		FlagPostgresqlDSN:   "host=localhost user=app password=123qwe dbname=urls_database sslmode=disable"}
+	// flagConfig := config.ParseFlags()
 	var l *logger.Logger
 	var err error
 	if l, err = logger.CreateLogger(flagConfig.FlagLogLevel); err != nil {
