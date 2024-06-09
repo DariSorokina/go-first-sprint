@@ -31,7 +31,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, clientI
 	}
 
 	if clientID != 0 {
-		clientIDcookie := cookie.CreateCookieClientID(clientID)
+		_, clientIDcookie := cookie.СreateCookieClientID("test")
 		req.AddCookie(clientIDcookie)
 	}
 
