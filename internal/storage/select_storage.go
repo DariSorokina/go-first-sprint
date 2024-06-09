@@ -1,3 +1,4 @@
+// Package storage provides primitives for connecting to data storages.
 package storage
 
 import (
@@ -9,8 +10,10 @@ import (
 	"github.com/DariSorokina/go-first-sprint.git/internal/models"
 )
 
+// ErrShortURLAlreadyExist indicates that a corresponding short URL already exists.
 var ErrShortURLAlreadyExist = errors.New("corresponding short URL already exists")
 
+// Database is a set of method signatures for data storage.
 type Database interface {
 	SetValue(ctx context.Context, shortURL, longURL string, userID int)
 	GetShort(ctx context.Context, longURL string) (shortURL string, err error)
@@ -21,6 +24,7 @@ type Database interface {
 	Close()
 }
 
+// SetStorage is a constructor function for data storage object.
 func SetStorage(flagConfig *config.FlagConfig, l *logger.Logger) (Database, error) {
 	if flagConfig.FlagPostgresqlDSN != "" {
 		storage, err := NewPostgresqlDB(flagConfig.FlagPostgresqlDSN, l)
