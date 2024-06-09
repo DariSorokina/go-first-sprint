@@ -166,12 +166,6 @@ func TestRouter(t *testing.T) {
 }
 
 func getTestServer() (flagConfig *config.FlagConfig, storageFile storage.Database, serv *Server) {
-	// flagConfig = &config.FlagConfig{
-	// 	FlagRunAddr:         ":8080",
-	// 	FlagBaseURL:         "http://localhost:8080/",
-	// 	FlagLogLevel:        "info",
-	// 	FlagFileStoragePath: "/storage/short-url-db.json"}
-
 	flagConfig = config.ParseFlags()
 
 	var l *logger.Logger

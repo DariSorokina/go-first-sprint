@@ -1,3 +1,4 @@
+// Package storage provides primitives for connecting to data storages.
 package storage
 
 import (
