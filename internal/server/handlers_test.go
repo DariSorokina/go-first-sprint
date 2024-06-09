@@ -2,6 +2,8 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -46,13 +48,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method, path string, clientI
 }
 
 func TestRouter(t *testing.T) {
-	flagConfig := &config.FlagConfig{
-		FlagRunAddr:         ":8080",
-		FlagBaseURL:         "http://localhost:8080/",
-		FlagLogLevel:        "info",
-		FlagFileStoragePath: "/storage/short-url-db.json",
-		FlagPostgresqlDSN:   "host=localhost user=app password=123qwe dbname=urls_database sslmode=disable"}
-	// flagConfig := config.ParseFlags()
+	flagConfig := config.ParseFlags()
 	var l *logger.Logger
 	var err error
 	if l, err = logger.CreateLogger(flagConfig.FlagLogLevel); err != nil {
@@ -72,6 +68,22 @@ func TestRouter(t *testing.T) {
 	serv := NewServer(app, flagConfig, l)
 	testServer := httptest.NewServer(serv.newRouter())
 	defer testServer.Close()
+
+	// data for shortenerBatchHandler test
+	batchData := []struct {
+		CorrelationID string `json:"correlation_id"`
+		OriginalURL   string `json:"original_url"`
+	}{
+		{
+			CorrelationID: "qwerty",
+			OriginalURL:   "https://practicum.yandex.ru/",
+		},
+	}
+	batchJSONData, err := json.Marshal(batchData)
+	if err != nil {
+		fmt.Println("Error marshalling JSON:", err)
+		return
+	}
 
 	type expectedData struct {
 		expectedContentType string
@@ -124,6 +136,19 @@ func TestRouter(t *testing.T) {
 				expectedContentType: "application/json",
 				expectedStatusCode:  http.StatusConflict,
 				expectedBody:        "{\"result\":\"http://localhost:8080/d41d8cd98f\"}",
+				expectedLocation:    "",
+			},
+		},
+		{
+			name:        "handler: shortenerBatchHandler, test: StatusCreated",
+			method:      http.MethodPost,
+			clientID:    1,
+			requestBody: bytes.NewBuffer([]byte(batchJSONData)),
+			requestPath: "/api/shorten/batch",
+			expectedData: expectedData{
+				expectedContentType: "application/json",
+				expectedStatusCode:  http.StatusCreated,
+				expectedBody:        "[{\"correlation_id\":\"qwerty\",\"short_url\":\"http://localhost:8080/d41d8cd98f\"}]",
 				expectedLocation:    "",
 			},
 		},
