@@ -12,11 +12,13 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+// Claims struct includes the registered claims from jwt package and a custom UserID field.
 type Claims struct {
 	jwt.RegisteredClaims
 	UserID int
 }
 
+// Constants for token expiration time and the secret key used for signing JWT.
 const TOKENEXP = time.Hour * 3
 const SECRETKEY = "supersecretkey"
 
@@ -74,6 +76,8 @@ func getUserID(tokenString string) int {
 	return claims.UserID
 }
 
+// СreateCookieClientID creates a JWT token and embeds it in an HTTP cookie.
+// Returns the generated user ID and the created cookie.
 func СreateCookieClientID(task string) (generatedUserID int, cookie *http.Cookie) {
 	generatedUserID, JWTString, err := createJWTString(task)
 	if err != nil {
@@ -99,6 +103,8 @@ func validateUserID(userID int) bool {
 	return false
 }
 
+// CookieMiddleware returns a middleware that ensures each request has a valid JWT in the "ClientID" cookie.
+// If the cookie is missing or invalid, a new JWT is created and set as a cookie.
 func CookieMiddleware() func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {

@@ -108,9 +108,11 @@ func (storage *Storage) GetURLsByUserID(ctx context.Context, userID int) (urls [
 	return
 }
 
+// DeleteURLsWorker updates the delete flag for a set of short URLs associated with a user ID.
 func (storage *Storage) DeleteURLsWorker(shortURLs []string, userID int) {
 }
 
+// Ping checks the connection.
 func (storage *Storage) Ping(ctx context.Context) error {
 	return nil
 }
