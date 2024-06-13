@@ -3,11 +3,11 @@ package server
 import (
 	"net/http"
 
-	"github.com/DariSorokina/go-first-sprint.git/internal/app"
-	"github.com/DariSorokina/go-first-sprint.git/internal/config"
-	"github.com/DariSorokina/go-first-sprint.git/internal/cookie"
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
-	"github.com/DariSorokina/go-first-sprint.git/internal/middleware"
+	"github.com/DariSorokina/go-first-sprint/internal/app"
+	"github.com/DariSorokina/go-first-sprint/internal/config"
+	"github.com/DariSorokina/go-first-sprint/internal/cookie"
+	"github.com/DariSorokina/go-first-sprint/internal/logger"
+	"github.com/DariSorokina/go-first-sprint/internal/middleware"
 	"github.com/go-chi/chi/v5"
 )
 

@@ -6,8 +6,8 @@ import (
 	"log"
 	"sync"
 
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
-	"github.com/DariSorokina/go-first-sprint.git/internal/models"
+	"github.com/DariSorokina/go-first-sprint/internal/logger"
+	"github.com/DariSorokina/go-first-sprint/internal/models"
 )
 
 // Storage represents a storage structure for managing file storage, mappings between original and short URLs,

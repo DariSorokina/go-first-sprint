@@ -3,11 +3,11 @@ package main
 import (
 	"log"
 
-	"github.com/DariSorokina/go-first-sprint.git/internal/app"
-	"github.com/DariSorokina/go-first-sprint.git/internal/config"
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
-	"github.com/DariSorokina/go-first-sprint.git/internal/server"
-	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
+	"github.com/DariSorokina/go-first-sprint/internal/app"
+	"github.com/DariSorokina/go-first-sprint/internal/config"
+	"github.com/DariSorokina/go-first-sprint/internal/logger"
+	"github.com/DariSorokina/go-first-sprint/internal/server"
+	"github.com/DariSorokina/go-first-sprint/internal/storage"
 )
 
 func main() {

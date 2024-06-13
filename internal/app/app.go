@@ -6,9 +6,9 @@ import (
 	"crypto/md5"
 	"fmt"
 
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
-	"github.com/DariSorokina/go-first-sprint.git/internal/models"
-	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
+	"github.com/DariSorokina/go-first-sprint/internal/logger"
+	"github.com/DariSorokina/go-first-sprint/internal/models"
+	"github.com/DariSorokina/go-first-sprint/internal/storage"
 )
 
 // App is a structure representing the application logic.

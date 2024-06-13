@@ -1,3 +1,4 @@
+// Package cookie provides functionality for creating and managing JSON Web Tokens (JWT) embedded in HTTP cookies.
 package cookie
 
 import (
@@ -18,8 +19,10 @@ type Claims struct {
 	UserID int
 }
 
-// Constants for token expiration time and the secret key used for signing JWT.
+// Constant TOKENEXP is used for specifying the token expiration time.
 const TOKENEXP = time.Hour * 3
+
+// Constant TOKENEXP is used for specifying the secret key used for signing JWT.
 const SECRETKEY = "supersecretkey"
 
 var generatedUsersIDs = []int{1}

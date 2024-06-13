@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
+	"github.com/DariSorokina/go-first-sprint/internal/logger"
 )
 
 type fileStorage struct {

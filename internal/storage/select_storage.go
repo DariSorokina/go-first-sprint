@@ -5,9 +5,9 @@ import (
 	"context"
 	"errors"
 
-	"github.com/DariSorokina/go-first-sprint.git/internal/config"
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
-	"github.com/DariSorokina/go-first-sprint.git/internal/models"
+	"github.com/DariSorokina/go-first-sprint/internal/config"
+	"github.com/DariSorokina/go-first-sprint/internal/logger"
+	"github.com/DariSorokina/go-first-sprint/internal/models"
 )
 
 // ErrShortURLAlreadyExist indicates that a corresponding short URL already exists.

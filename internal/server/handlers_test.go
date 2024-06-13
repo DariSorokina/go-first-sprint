@@ -10,11 +10,11 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/DariSorokina/go-first-sprint.git/internal/app"
-	"github.com/DariSorokina/go-first-sprint.git/internal/config"
-	"github.com/DariSorokina/go-first-sprint.git/internal/cookie"
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
-	"github.com/DariSorokina/go-first-sprint.git/internal/storage"
+	"github.com/DariSorokina/go-first-sprint/internal/app"
+	"github.com/DariSorokina/go-first-sprint/internal/config"
+	"github.com/DariSorokina/go-first-sprint/internal/cookie"
+	"github.com/DariSorokina/go-first-sprint/internal/logger"
+	"github.com/DariSorokina/go-first-sprint/internal/storage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

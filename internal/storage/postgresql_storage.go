@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
-	"github.com/DariSorokina/go-first-sprint.git/internal/models"
+	"github.com/DariSorokina/go-first-sprint/internal/logger"
+	"github.com/DariSorokina/go-first-sprint/internal/models"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 

@@ -1,4 +1,4 @@
-module github.com/DariSorokina/go-first-sprint.git
+module github.com/DariSorokina/go-first-sprint
 
 go 1.21
 
