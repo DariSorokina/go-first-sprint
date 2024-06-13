@@ -9,13 +9,8 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/DariSorokina/go-first-sprint.git/internal/logger"
 	"github.com/golang-jwt/jwt/v4"
 )
-
-type Cookie struct {
-	log *logger.Logger
-}
 
 type Claims struct {
 	jwt.RegisteredClaims
@@ -32,9 +27,13 @@ func generateUserID() int {
 	return randomNumber
 }
 
-func createJWTString() (generatedUserID int, tokenString string, err error) {
-	generatedUserID = generateUserID()
-	generatedUsersIDs = append(generatedUsersIDs, generatedUserID)
+func createJWTString(task string) (generatedUserID int, tokenString string, err error) {
+	if task != "test" {
+		generatedUserID = generateUserID()
+		generatedUsersIDs = append(generatedUsersIDs, generatedUserID)
+	} else {
+		generatedUserID = 1
+	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, Claims{
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -75,8 +74,8 @@ func getUserID(tokenString string) int {
 	return claims.UserID
 }
 
-func createCookieClientID() (generatedUserID int, cookie *http.Cookie) {
-	generatedUserID, JWTString, err := createJWTString()
+func СreateCookieClientID(task string) (generatedUserID int, cookie *http.Cookie) {
+	generatedUserID, JWTString, err := createJWTString(task)
 	if err != nil {
 		log.Println(err)
 	}
@@ -108,7 +107,7 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 			if err != nil {
 				switch {
 				case errors.Is(err, http.ErrNoCookie):
-					userID, createdCookie := createCookieClientID()
+					userID, createdCookie := СreateCookieClientID("")
 					http.SetCookie(w, createdCookie)
 					userIDString := strconv.Itoa(userID)
 					r.Header.Set("ClientID", userIDString)
@@ -126,7 +125,7 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 			clientID := reseivedCookie.Value
 
 			if clientID == "" {
-				_, createdCookie := createCookieClientID()
+				_, createdCookie := СreateCookieClientID("")
 				http.SetCookie(w, createdCookie)
 				w.WriteHeader(http.StatusUnauthorized)
 				return
@@ -141,7 +140,7 @@ func CookieMiddleware() func(h http.Handler) http.Handler {
 				r.Header.Set("ClientID", userIDString)
 				h.ServeHTTP(w, r)
 			} else {
-				_, createdCookie := createCookieClientID()
+				_, createdCookie := СreateCookieClientID("")
 				http.SetCookie(w, createdCookie)
 				h.ServeHTTP(w, r)
 			}

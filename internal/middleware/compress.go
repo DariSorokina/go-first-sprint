@@ -1,3 +1,4 @@
+// Package middleware provides HTTP middleware for compressing HTTP responses and decompressing HTTP request bodies using gzip encoding.
 package middleware
 
 import (
@@ -66,6 +67,7 @@ func (c *compressReader) Close() error {
 	return c.zr.Close()
 }
 
+// CompressorMiddleware is a middleware function that compresses HTTP responses and decompresses request bodies based on the "Accept-Encoding" and "Content-Encoding" headers.
 func CompressorMiddleware() func(h http.Handler) http.Handler {
 	return func(h http.Handler) http.Handler {
 		fn := func(w http.ResponseWriter, r *http.Request) {
