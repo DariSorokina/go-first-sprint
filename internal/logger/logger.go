@@ -10,7 +10,7 @@ import (
 )
 
 type Logger struct {
-	customLog *zap.Logger
+	*zap.Logger
 }
 
 func newLogger() *Logger {
@@ -18,12 +18,12 @@ func newLogger() *Logger {
 	if err != nil {
 		log.Println(err)
 	}
-	return &Logger{customLog: customLog}
+	return &Logger{Logger: customLog}
 }
 
 func CreateLogger(level string) (customLog *Logger, err error) {
 	log := newLogger()
-	defer log.customLog.Sync()
+	defer log.Sync()
 
 	lvl, err := zap.ParseAtomicLevel(level)
 	if err != nil {
@@ -38,7 +38,7 @@ func CreateLogger(level string) (customLog *Logger, err error) {
 		return log, err
 	}
 
-	log.customLog = zl
+	log.Logger = zl
 	return log, nil
 }
 
@@ -48,7 +48,7 @@ func (log *Logger) WithLogging() func(h http.Handler) http.Handler {
 			ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
 			t1 := time.Now()
 			defer func() {
-				log.customLog.Info("served",
+				log.Info("served",
 					zap.String("method", r.Method),
 					zap.String("uri", r.URL.Path),
 					zap.Int("status", ww.Status()),
