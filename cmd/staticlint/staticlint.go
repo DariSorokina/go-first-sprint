@@ -61,7 +61,7 @@ import (
 // main is the entry point for the multichecker tool. It configures and runs various static analysis checks.
 func main() {
 	// Add standard static analyzers of the golang.org/x/tools/go/analysis/passes package.
-	var passesAnalyses []*analysis.Analyzer = []*analysis.Analyzer{
+	var passesAnalyses = []*analysis.Analyzer{
 		appends.Analyzer,
 		asmdecl.Analyzer,
 		assign.Analyzer,
