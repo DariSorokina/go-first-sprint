@@ -1,3 +1,4 @@
+// Package config provides functionality for managing configuration flags and environment variables.
 package config
 
 import (
@@ -5,6 +6,7 @@ import (
 	"os"
 )
 
+// FlagConfig is a structure containing configuration flags for the server.
 type FlagConfig struct {
 	FlagRunAddr         string
 	FlagBaseURL         string
@@ -13,10 +15,12 @@ type FlagConfig struct {
 	FlagPostgresqlDSN   string
 }
 
+// NewFlagConfig is a constructor function to create a new FlagConfig instance.
 func NewFlagConfig() *FlagConfig {
 	return &FlagConfig{}
 }
 
+// ParseFlags is a function to parse command-line flags and environment variables into FlagConfig.
 func ParseFlags() (flagConfig *FlagConfig) {
 	flagConfig = NewFlagConfig()
 	flag.StringVar(&flagConfig.FlagRunAddr, "a", ":8080", "address and port to run server")
