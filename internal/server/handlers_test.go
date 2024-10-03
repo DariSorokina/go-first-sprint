@@ -101,6 +101,19 @@ func TestRouter(t *testing.T) {
 		expectedData expectedData
 	}{
 		{
+			name:        "handler: pingPostgresqlHandler, test: StatusOK",
+			method:      http.MethodGet,
+			clientID:    1,
+			requestBody: nil,
+			requestPath: "/ping",
+			expectedData: expectedData{
+				expectedContentType: "",
+				expectedStatusCode:  http.StatusOK,
+				expectedBody:        "",
+				expectedLocation:    "",
+			},
+		},
+		{
 			name:        "handler: ShortenerHandler, test: StatusCreated",
 			method:      http.MethodPost,
 			clientID:    1,
@@ -149,6 +162,32 @@ func TestRouter(t *testing.T) {
 				expectedContentType: "application/json",
 				expectedStatusCode:  http.StatusCreated,
 				expectedBody:        "[{\"correlation_id\":\"qwerty\",\"short_url\":\"http://localhost:8080/d41d8cd98f\"}]",
+				expectedLocation:    "",
+			},
+		},
+		{
+			name:        "handler: urlsByIDHandler, test: StatusNoContent",
+			method:      http.MethodGet,
+			clientID:    1,
+			requestBody: nil,
+			requestPath: "/api/user/urls",
+			expectedData: expectedData{
+				expectedContentType: "",
+				expectedStatusCode:  http.StatusNoContent,
+				expectedBody:        "",
+				expectedLocation:    "",
+			},
+		},
+		{
+			name:        "handler: deleteURLsHandler, test: StatusAccepted",
+			method:      http.MethodDelete,
+			clientID:    1,
+			requestBody: bytes.NewBuffer([]byte(`["http://localhost:8080/d41d8cd98f"]`)),
+			requestPath: "/api/user/urls",
+			expectedData: expectedData{
+				expectedContentType: "",
+				expectedStatusCode:  http.StatusAccepted,
+				expectedBody:        "",
 				expectedLocation:    "",
 			},
 		},
